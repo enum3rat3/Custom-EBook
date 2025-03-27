@@ -6,6 +6,7 @@ import com.enum3rat3.customebooks.model.Chunk;
 import com.enum3rat3.customebooks.DTO.NewBookDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class ConsumerController {
     }
 
     @GetMapping("/book/{bookId}")
+    @PreAuthorize("hasRole('consumer')")
     public ResponseEntity<?> listAllChunks(@PathVariable int bookId) {
         List<Chunk> chunkList = new ArrayList<>();
         chunkList = consumerService.listAllChunks(bookId);
@@ -36,7 +38,8 @@ public class ConsumerController {
         return ResponseEntity.ok(chunkList);
     }
 
-    @GetMapping("/generate-book")
+    @PostMapping("/generate-book")
+    @PreAuthorize("hasRole('consumer')")
     public ResponseEntity<?> generateBook(@RequestBody NewBookDTO newBookDTO) throws IOException {
         int totalCost = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getChunkIds());
 

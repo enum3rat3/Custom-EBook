@@ -5,6 +5,7 @@ import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +21,7 @@ public class PublisherController {
     private PublisherService publisherService;
 
     @PostMapping("/upload")
+    @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> uploadPDF(@RequestParam String bookName, @RequestParam int bookPrice, @RequestParam MultipartFile book)
     {
         int bookId;
@@ -33,6 +35,7 @@ public class PublisherController {
     }   
 
     @PostMapping("/book/chunks")
+    @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> chunkPDF(@RequestParam int bookId, @RequestParam int startPage, @RequestParam int endPage, @RequestParam int chPrice) throws IOException {
         publisherService.chunkPDF(bookId, startPage, endPage, chPrice);
 
@@ -40,6 +43,7 @@ public class PublisherController {
     }
 
     @DeleteMapping("/book/{bookId}")
+    @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> deleteBook(@PathVariable int bookId) {
         publisherService.deleteBook(bookId);
 
@@ -47,6 +51,7 @@ public class PublisherController {
     }
 
     @GetMapping("/book/{authorId}")
+    @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> listBooks(@PathVariable int authorId) {
         List<Book> bookList = new ArrayList<>();
 
@@ -56,6 +61,7 @@ public class PublisherController {
     }
 
     @GetMapping("/chunk/{bookId}")
+    @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> listChunks(@PathVariable int bookId) {
         List<Chunk> chunkList = new ArrayList<>();
 
@@ -65,6 +71,7 @@ public class PublisherController {
     }
 
     @DeleteMapping("/chunk/{chunkId}")
+    @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> deleteChunk(@PathVariable int chunkId) {
         publisherService.deleteChunk(chunkId);
 
