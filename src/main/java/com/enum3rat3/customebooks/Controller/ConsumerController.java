@@ -3,7 +3,7 @@ package com.enum3rat3.customebooks.Controller;
 import com.enum3rat3.customebooks.Service.ConsumerService;
 import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
-import com.enum3rat3.customebooks.model.NewBook;
+import com.enum3rat3.customebooks.DTO.NewBookDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +37,8 @@ public class ConsumerController {
     }
 
     @GetMapping("/generate-book")
-    public ResponseEntity<?> generateBook(@RequestBody NewBook newBook) throws IOException {
-        int totalCost = consumerService.generateBook(newBook.getNewTitle(), newBook.getChunkIds());
+    public ResponseEntity<?> generateBook(@RequestBody NewBookDTO newBookDTO) throws IOException {
+        int totalCost = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getChunkIds());
 
         return ResponseEntity.ok("New Book Generated, Pay: " + totalCost + "Rs to download the book");
     }

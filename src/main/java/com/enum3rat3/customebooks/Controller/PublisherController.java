@@ -30,7 +30,7 @@ public class PublisherController {
         }
 
         return ResponseEntity.ok().body(bookId);
-    }
+    }   
 
     @PostMapping("/book/chunks")
     public ResponseEntity<?> chunkPDF(@RequestParam int bookId, @RequestParam int startPage, @RequestParam int endPage, @RequestParam int chPrice) throws IOException {
