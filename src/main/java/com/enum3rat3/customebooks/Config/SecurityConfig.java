@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -17,16 +19,17 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private JwtConverter jwtConverter;
+//    @Autowired
+//    private JwtConverter jwtConverter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeHttpRequests(auth -> auth.
+                requestMatchers("/**").permitAll().
                 requestMatchers("/consumer/books").permitAll().
                 anyRequest().authenticated());
 
-        http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtConverter);
+        http.oauth2ResourceServer().jwt();
 
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
@@ -39,5 +42,17 @@ public class SecurityConfig {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setDefaultRolePrefix("");
         return expressionHandler;
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+
+        grantedAuthoritiesConverter.setAuthorityPrefix(""); // By Default it's SCOPE
+        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // By Default "scp" or "scope"
+        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+
+        return converter;
     }
 }
