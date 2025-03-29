@@ -18,28 +18,7 @@ public class KeyCloakController {
     @PostMapping
     public String addUser(@RequestBody UserDTO userDTO)
     {
-        service.addUser(userDTO);
-        return "User Added Successfully.";
-    }
-
-    @GetMapping(path = "/{userName}")
-    public List<UserRepresentation> getUser(@PathVariable("userName") String userName)
-    {
-        List<UserRepresentation> user = service.getUser(userName);
-        return user;
-    }
-
-    @PutMapping(path = "/update/{userId}")
-    public String updateUser(@PathVariable("userId") String userId, @RequestBody UserDTO userDTO)
-    {
-        service.updateUser(userId, userDTO);
-        return "User Details Updated Successfully.";
-    }
-
-    @DeleteMapping(path = "/{userId}")
-    public String deleteUser(@PathVariable("userId") String userId)
-    {
-        service.deleteUser(userId);
-        return "User Deleted Successfully.";
+        boolean status = service.addUser(userDTO);
+        return status ? "User Added Successfully." : "User Not Added Successfully.";
     }
 }

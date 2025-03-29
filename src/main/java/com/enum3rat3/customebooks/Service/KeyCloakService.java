@@ -1,56 +1,50 @@
 package com.enum3rat3.customebooks.Service;
 
-import com.enum3rat3.customebooks.Config.Credentials;
 import com.enum3rat3.customebooks.DTO.UserDTO;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import javax.ws.rs.core.Response;
 import java.util.List;
 
-import static com.enum3rat3.customebooks.Config.KeycloakConfig.getInstance;
-
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class KeyCloakService {
-    public void addUser(UserDTO userDTO){
-        CredentialRepresentation credential = Credentials.createPasswordCredentials(userDTO.getPassword());
-        UserRepresentation user = new UserRepresentation();
-        user.setUsername(userDTO.getUserName());
-        user.setFirstName(userDTO.getFirstname());
-        user.setLastName(userDTO.getLastName());
-        user.setEmail(userDTO.getEmailId());
-        user.setCredentials(Collections.singletonList(credential));
-        user.setEnabled(true);
 
-        UsersResource instance = (UsersResource) getInstance();
-        instance.create(user);
-    }
+    @Value("${keycloak.realm}")
+    private String realm;
 
-    public void updateUser(String userId, UserDTO userDTO){
-        CredentialRepresentation credential = Credentials.createPasswordCredentials(userDTO.getPassword());
-        UserRepresentation user = new UserRepresentation();
-        user.setUsername(userDTO.getUserName());
-        user.setFirstName(userDTO.getFirstname());
-        user.setLastName(userDTO.getLastName());
-        user.setEmail(userDTO.getEmailId());
-        user.setCredentials(Collections.singletonList(credential));
+    private final Keycloak keycloak;
 
-        UsersResource usersResource = (UsersResource) getInstance();
-        usersResource.get(userId).update(user);
-    }
+    public boolean addUser(UserDTO userDTO){
+        
+        UserRepresentation userRepresentation= new UserRepresentation();
+        userRepresentation.setEnabled(true);
+        userRepresentation.setFirstName(userDTO.getFirstName());
+        userRepresentation.setLastName(userDTO.getLastName());
+        userRepresentation.setUsername(userDTO.getUserName());
+        userRepresentation.setEmail(userDTO.getEmailId());
+        userRepresentation.setEmailVerified(true);
 
-    public void deleteUser(String userId){
-        UsersResource usersResource = (UsersResource) getInstance();
-        usersResource.get(userId).remove();
-    }
+        CredentialRepresentation credentialRepresentation=new CredentialRepresentation();
+        credentialRepresentation.setValue(userDTO.getPassword());
+        credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
 
-    public List<UserRepresentation> getUser(String userName) {
-        UsersResource usersResource = (UsersResource) getInstance();
-        List<UserRepresentation> user = usersResource.search(userName, true);
-        return user;
+        userRepresentation.setCredentials(List.of(credentialRepresentation));
+
+        RealmResource resource = keycloak.realm(realm);
+        UsersResource usersResource = resource.users();
+        Response response = usersResource.create(userRepresentation);
+
+        System.out.println(response.readEntity(String.class));
+        System.out.println(response.getStatus());
+
+        return response.getStatus() == 201;
     }
 }
