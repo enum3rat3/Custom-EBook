@@ -15,10 +15,10 @@ public class KeyCloakController {
     @Autowired
     private KeyCloakService service;
 
-    @PostMapping
-    public String addUser(@RequestBody UserDTO userDTO)
+    @PostMapping("/{userRole}")
+    public String addUser(@RequestBody UserDTO userDTO, @PathVariable String userRole)
     {
-        boolean status = service.addUser(userDTO);
+        boolean status = service.addUser(userDTO, userRole);
         return status ? "User Added Successfully." : "User Not Added Successfully.";
     }
 }
