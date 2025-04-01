@@ -20,40 +20,40 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-//    @Autowired
-//    private JwtConverter jwtConverter;
+    @Autowired
+    private JwtConverter jwtConverter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable().authorizeHttpRequests(auth -> auth.
-                requestMatchers(HttpMethod.POST, "/api/user/**").permitAll().
+                requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll().
                 requestMatchers("/consumer/books").permitAll().
                 anyRequest().authenticated());
 
-        http.oauth2ResourceServer().jwt();
+        http.oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtConverter);
 
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         return http.build();
     }
 
-    @Bean
-    public DefaultMethodSecurityExpressionHandler msSecurity()
-    {
-        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
-        expressionHandler.setDefaultRolePrefix("");
-        return expressionHandler;
-    }
-
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-
-        grantedAuthoritiesConverter.setAuthorityPrefix(""); // By Default it's SCOPE
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // By Default "scp" or "scope"
-        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
-
-        return converter;
-    }
+//    @Bean
+//    public DefaultMethodSecurityExpressionHandler msSecurity()
+//    {
+//        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+//        expressionHandler.setDefaultRolePrefix("");
+//        return expressionHandler;
+//    }
+//
+//    @Bean
+//    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+//        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+//        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+//
+//        grantedAuthoritiesConverter.setAuthorityPrefix(""); // By Default it's SCOPE
+//        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles"); // By Default "scp" or "scope"
+//        converter.setJwtGrantedAuthoritiesConverter(grantedAuthoritiesConverter);
+//
+//        return converter;
+//    }
 }

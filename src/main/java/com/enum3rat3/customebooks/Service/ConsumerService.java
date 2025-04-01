@@ -51,7 +51,6 @@ public class ConsumerService {
             }
         }
         pdfMergerUtility.mergeDocuments(null);
-
         return totalCost;
     }
 }

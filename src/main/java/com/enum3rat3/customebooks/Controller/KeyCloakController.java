@@ -1,24 +1,27 @@
 package com.enum3rat3.customebooks.Controller;
 
-import com.enum3rat3.customebooks.DTO.UserDTO;
+import com.enum3rat3.customebooks.DTO.RegisterDTO;
 import com.enum3rat3.customebooks.Service.KeyCloakService;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/auth")
 public class KeyCloakController {
 
     @Autowired
     private KeyCloakService service;
 
     @PostMapping("/{userRole}")
-    public String addUser(@RequestBody UserDTO userDTO, @PathVariable String userRole)
+    public ResponseEntity<String> addUser(@RequestBody RegisterDTO registerDTO, @PathVariable String userRole)
     {
-        boolean status = service.addUser(userDTO, userRole);
-        return status ? "User Added Successfully." : "User Not Added Successfully.";
+        return service.addUser(registerDTO, userRole);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<String> userLogin(@RequestParam String username, @RequestParam String password, @RequestParam String userRole)
+    {
+        return service.userLogin(username, password, userRole);
     }
 }

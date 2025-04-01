@@ -1,5 +1,6 @@
 package com.enum3rat3.customebooks.Controller;
 
+import com.enum3rat3.customebooks.DTO.BookDTO;
 import com.enum3rat3.customebooks.Service.PublisherService;
 import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
@@ -24,14 +25,14 @@ public class PublisherController {
     @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> uploadPDF(@RequestParam String bookName, @RequestParam int bookPrice, @RequestParam MultipartFile book)
     {
-        int bookId;
+        BookDTO bookDTO;
         try {
-            bookId = publisherService.uploadPDF(book, bookName, bookPrice);
+            bookDTO = publisherService.uploadPDF(book, bookName, bookPrice);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        return ResponseEntity.ok().body(bookId);
+        return ResponseEntity.ok().body(bookDTO);
     }   
 
     @PostMapping("/book/chunks")
