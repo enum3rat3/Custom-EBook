@@ -114,6 +114,7 @@ public class PublisherService {
 
             List<Chunk> chunks = chunkRepo.findAllByBkId(bookId);
             for(Chunk chunk : chunks) {
+                amazonS3Service.deleteBookAndChunk(chunk.getChS3Path());
                 String chunkPath = chunk.getChLocalPath();
                 File file1 = new File(chunkPath);
                 file1.delete();
