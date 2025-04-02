@@ -10,7 +10,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +37,9 @@ public class PublisherController {
     @PostMapping("/book/chunks")
     @PreAuthorize("hasRole('publisher')")
     public ResponseEntity<?> chunkPDF(@RequestParam int bookId, @RequestParam int startPage, @RequestParam int endPage, @RequestParam int chPrice) throws IOException {
-        publisherService.chunkPDF(bookId, startPage, endPage, chPrice);
+        String response = publisherService.chunkPDF(bookId, startPage, endPage, chPrice);
 
-        return ResponseEntity.ok().body("Chunk");
+        return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping("/book/{bookId}")

@@ -17,8 +17,11 @@ public class Book {
     @Column(name = "bkname")
     private String bkName;
 
-    @Column(name = "bkpath")
-    private String bkPath;
+    @Column(name = "bklocalpath")
+    private String bkLocalPath;
+
+    @Column(name = "bks3path")
+    private String bkS3Path;
 
     @Column(name = "bkprice")
     private int bookPrice;
@@ -26,9 +29,10 @@ public class Book {
     @Column(name = "pubid")
     private int pubId;
 
-    public Book(String bkName, String bkPath, int bookPrice, int pubId) {
+    public Book(String bkName, String bkLocalPath, String bkS3Path, int bookPrice, int pubId) {
         this.bkName = bkName;
-        this.bkPath = bkPath;
+        this.bkLocalPath = bkLocalPath;
+        this.bkS3Path = bkS3Path;
         this.bookPrice = bookPrice;
         this.pubId = pubId;
     }

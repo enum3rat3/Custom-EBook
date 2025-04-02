@@ -27,17 +27,21 @@ public class Chunk {
     private int chPrice;
 
     @Column
-    private String chPath;
+    private String chS3Path;
+
+    @Column
+    private String chLocalPath;
 
     @Column
     private int bkId;
 
 
-    public Chunk(int bookId, int startPage, int endPage, int chPrice, String chunkPath) {
+    public Chunk(int bookId, int startPage, int endPage, int chPrice, String chS3Path, String chLocalPath) {
         this.startPage = startPage;
         this.endPage = endPage;
         this.chPrice = chPrice;
         this.bkId = bookId;
-        this.chPath = chunkPath;
+        this.chS3Path = chS3Path;
+        this.chLocalPath = chLocalPath;
     }
 }

@@ -30,33 +30,40 @@ public class PublisherService {
 
     // ======================== Upload PDF =====================
     public BookDTO uploadPDF(MultipartFile book, String bookName, int bookPrice) throws IOException {
-        amazonS3Service.uploadFile(book, bookName);
 
-        String path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName + ".pdf";
+        // Upload Book in Cloud
+        amazonS3Service.uploadBook(book, bookName.replace(" ", "_"));
+        String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";
 
-        Book book1 = new Book(bookName, path, bookPrice, 1);
+        // Local Save
+        String localPath = "src/main/resources/upload/" + bookName.replace(" ", "_") + ".pdf";
+        OutputStream os = new FileOutputStream(new File(localPath));
+        os.write(book.getBytes());
 
+        // Save Details
+        Book book1 = new Book(bookName, localPath, s3Path, bookPrice, 1);
         book1 = bookRepo.save(book1);
 
         BookDTO bookDTO = new BookDTO();
         bookDTO.setBookID(book1.getBid());
-        bookDTO.setBookPath(book1.getBkPath());
-
+        bookDTO.setBookPath(book1.getBkS3Path());
         return bookDTO;
     }
 
     // ======================== Chunk PDF =====================
-    public void chunkPDF(int bookId, int startPage, int endPage, int chPrice) throws IOException {
+    public String chunkPDF(int bookId, int startPage, int endPage, int chPrice) throws IOException {
         Book bk = bookRepo.findById(bookId).orElse(null);
 
         if(bk != null) {
-            String filePath = bk.getBkPath();
-            System.out.println("FilePath: " + filePath);
-            String chunkPath = "/home/jaimin/Desktop/SEM-2/Project/Custom-eBooks/src/main/resources/splitted-folder/" + bk.getBkName() + "-" + startPage + "-" + endPage + ".pdf";
-            File file = new File(filePath);
+
+            String filePath = bk.getBkLocalPath();
+            String chunkS3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bk.getBkName().replace(" ", "_") + "_" + startPage + "_" + endPage + ".pdf";
+            String chunkLocalPath = "src/main/resources/chunks/" + bk.getBkName().replace(" ", "_") + "_" + startPage + "_" + endPage + ".pdf";
 
             // Loading PDF
+            File file = new File(filePath);
             PDDocument document = Loader.loadPDF(file);
+
             // ============== Splitting PDF into multiple pages ===============
             Splitter splitter = new Splitter();
             splitter.setSplitAtPage(endPage - startPage + 1);
@@ -65,13 +72,17 @@ public class PublisherService {
 
             Iterable<PDDocument> page = splitter.split(document);
             for (PDDocument pdDocument : page) {
-                pdDocument.save(chunkPath);
+                pdDocument.save(chunkLocalPath);
             }
 
-            Chunk ch = new Chunk(bookId, startPage, endPage, chPrice, chunkPath);
+            amazonS3Service.uploadChunk(new File(chunkLocalPath), bk.getBkName().replace(" ", "_") + "_" + startPage + "_" + endPage + ".pdf");
+            Chunk ch = new Chunk(bookId, startPage, endPage, chPrice, chunkS3Path, chunkLocalPath);
 
             chunkRepo.save(ch);
+            return chunkS3Path;
         }
+
+        return "Book not found";
     }
 
     // ======================== List of Books by Publisher ID =====================
@@ -94,15 +105,16 @@ public class PublisherService {
         Book bk = bookRepo.findById(bookId).orElse(null);
 
         if(bk != null) {
-            String bookPath = bk.getBkPath();
+            amazonS3Service.deleteBookAndChunk(bk.getBkS3Path());
+            bookRepo.deleteById(bookId);
+
+            String bookPath = bk.getBkLocalPath();
             File file = new File(bookPath);
             file.delete();
 
-            bookRepo.deleteById(bookId);
-
             List<Chunk> chunks = chunkRepo.findAllByBkId(bookId);
             for(Chunk chunk : chunks) {
-                String chunkPath = chunk.getChPath();
+                String chunkPath = chunk.getChLocalPath();
                 File file1 = new File(chunkPath);
                 file1.delete();
             }
@@ -116,7 +128,8 @@ public class PublisherService {
         Chunk chunk = chunkRepo.findById(chunkId).orElse(null);
 
         if(chunk != null) {
-            String chunkPath = chunk.getChPath();
+            String chunkPath = chunk.getChLocalPath();
+            amazonS3Service.deleteBookAndChunk(chunk.getChS3Path());
             File file1 = new File(chunkPath);
             file1.delete();
             chunkRepo.deleteById(chunkId);

@@ -8,7 +8,6 @@ import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +45,7 @@ public class ConsumerService {
         for (Integer chunkId : chunkIds) {
             Chunk chunk = chunkRepo.findById(chunkId).orElse(null);
             if(chunk != null) {
-                pdfMergerUtility.addSource(chunk.getChPath());
+                pdfMergerUtility.addSource(chunk.getChLocalPath());
                 totalCost += chunk.getChPrice();
             }
         }
