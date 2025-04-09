@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +39,8 @@ public class ConsumerController {
 
     @PostMapping("/generate-book")
     @PreAuthorize("hasRole('consumer')")
-    public ResponseEntity<?> generateBook(@RequestBody NewBookDTO newBookDTO) throws IOException {
-        int totalCost = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getChunkIds());
+    public ResponseEntity<?> generateBook(@RequestBody NewBookDTO newBookDTO) throws Exception {
+        int totalCost = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getAuthorName(), newBookDTO.getChunkIds());
 
         return ResponseEntity.ok("New Book Generated, Pay: " + totalCost + "Rs to download the book");
     }
