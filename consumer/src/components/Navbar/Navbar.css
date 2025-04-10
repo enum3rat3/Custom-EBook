@@ -1,0 +1,16 @@
+.navbar{
+    display: flex;
+    justify-content: space-between;
+}
+
+.navbar-left{
+
+    margin: 5px;
+    padding-left: 15px;
+}
+
+.navbar-right{
+margin: 5px;
+padding-right: 15px;
+
+}

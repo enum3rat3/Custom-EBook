@@ -1,0 +1,25 @@
+.newbook-main{
+    width: 98vw;
+    height: 80vh;
+    border: 2px solid red;
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+.left-panel{
+    border: 2px solid green;
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+   
+}
+
+.right-panel{
+    border: 2px solid blue;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
