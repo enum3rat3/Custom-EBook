@@ -1,6 +1,7 @@
 package com.enum3rat3.customebooks.Service;
 
 import com.enum3rat3.customebooks.DTO.BookDTO;
+import com.enum3rat3.customebooks.DTO.LocalS3DTO;
 import com.enum3rat3.customebooks.Repo.ChunkRepo;
 import com.enum3rat3.customebooks.Repo.BookRepo;
 import com.enum3rat3.customebooks.model.Book;
@@ -28,25 +29,36 @@ public class PublisherService {
     }
 
     // ======================== Upload PDF =====================
-    public BookDTO uploadPDF(MultipartFile book, String bookName, int bookPrice) throws IOException {
+    public void createBook(String bookName,String localPath, String s3Path, int bookPrice) throws IOException {
 
         // Upload Book in Cloud
+//        amazonS3Service.uploadBook(book, bookName.replace(" ", "_"));
+//        String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";
+//
+//        // Local Save
+//        String localPath = "src/main/resources/upload/" + bookName.replace(" ", "_") + ".pdf";
+//        OutputStream os = new FileOutputStream(new File(localPath));
+//        os.write(book.getBytes());
+
+        // Save Details
+
+        Book book1 = new Book(bookName, localPath, s3Path, bookPrice, 1);
+        book1 = bookRepo.save(book1);
+
+
+    }
+
+    public LocalS3DTO uploadBook(MultipartFile book,String bookName) throws IOException {
         amazonS3Service.uploadBook(book, bookName.replace(" ", "_"));
         String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";
 
-        // Local Save
+
         String localPath = "src/main/resources/upload/" + bookName.replace(" ", "_") + ".pdf";
         OutputStream os = new FileOutputStream(new File(localPath));
         os.write(book.getBytes());
 
-        // Save Details
-        Book book1 = new Book(bookName, localPath, s3Path, bookPrice, 1);
-        book1 = bookRepo.save(book1);
 
-        BookDTO bookDTO = new BookDTO();
-        bookDTO.setBookID(book1.getBid());
-        bookDTO.setBookPath(book1.getBkS3Path());
-        return bookDTO;
+        return new LocalS3DTO(localPath, s3Path);
     }
 
     // ======================== Chunk PDF =====================
