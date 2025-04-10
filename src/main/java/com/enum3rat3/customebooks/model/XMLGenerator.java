@@ -1,8 +1,5 @@
 package com.enum3rat3.customebooks.model;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -27,7 +24,7 @@ public class XMLGenerator {
     public void createXML(String title, String author, List<String> headings) throws TransformerException, IOException {
         Document doc = builder.newDocument();
 
-
+        // Root Tag
         Element root = doc.createElement("doc");
         doc.appendChild(root);
 
@@ -49,11 +46,6 @@ public class XMLGenerator {
             Element headingTag = doc.createElement("heading");
             headingTag.appendChild(doc.createTextNode(heading));
             contextTag.appendChild(headingTag);
-
-            String bookText = getText(heading);
-            Element bookTextTag = doc.createElement("bookText");
-            bookTextTag.appendChild(doc.createTextNode(bookText));
-            contextTag.appendChild(bookTextTag);
         }
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
@@ -63,22 +55,5 @@ public class XMLGenerator {
         DOMSource source = new DOMSource(doc);
         StreamResult result = new StreamResult(file);
         transformer.transform(source, result);
-    }
-
-    public  String sanitizeXML(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replaceAll("[\\x00-\\x1F\\x7F]", "");
-    }
-
-    public String getText(String heading) throws IOException {
-        String path = "src/main/resources/chunks/" + heading + ".pdf";
-        File file = new File(path);
-
-        PDDocument document = Loader.loadPDF(file);
-        PDFTextStripper stripper = new PDFTextStripper();
-
-        return sanitizeXML(stripper.getText(document));
     }
 }

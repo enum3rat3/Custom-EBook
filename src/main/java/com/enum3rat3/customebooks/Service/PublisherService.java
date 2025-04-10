@@ -6,7 +6,6 @@ import com.enum3rat3.customebooks.Repo.BookRepo;
 import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
 import jakarta.transaction.Transactional;
-import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.stereotype.Service;
@@ -62,7 +61,7 @@ public class PublisherService {
 
             // Loading PDF
             File file = new File(filePath);
-            PDDocument document = Loader.loadPDF(file);
+            PDDocument document = PDDocument.load(file);
 
             // ============== Splitting PDF into multiple pages ===============
             Splitter splitter = new Splitter();

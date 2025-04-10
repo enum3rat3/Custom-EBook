@@ -33,13 +33,13 @@
                 </x:xmpmeta>
             </fo:declarations>
 
-            <fo:bookmark-tree>
-                <xsl:for-each select="content/heading">
-                    <fo:bookmark internal-destination="{generate-id(.)}">
-                        <fo:bookmark-title><xsl:value-of select="."/></fo:bookmark-title>
-                    </fo:bookmark>
-                </xsl:for-each>
-            </fo:bookmark-tree>
+<!--            <fo:bookmark-tree>-->
+<!--                <xsl:for-each select="content/heading">-->
+<!--                    <fo:bookmark internal-destination="{generate-id(.)}">-->
+<!--                        <fo:bookmark-title><xsl:value-of select="."/></fo:bookmark-title>-->
+<!--                    </fo:bookmark>-->
+<!--                </xsl:for-each>-->
+<!--            </fo:bookmark-tree>-->
 
             <fo:page-sequence master-reference="title">
                 <fo:flow flow-name="title-region-body">
@@ -52,20 +52,12 @@
                     <fo:block font-size="16pt" font-weight="bold" font-family="sans-serif">Table of contents</fo:block>
                     <fo:table table-layout="fixed" width="100%" border-collapse="separate">
                         <fo:table-column column-width="15cm"/>
-                        <fo:table-column column-width="2cm"/>
                         <fo:table-body font-size="12pt" font-family="serif">
                             <xsl:for-each select="content/heading">
                                 <fo:table-row line-height="14pt">
                                     <fo:table-cell>
                                         <fo:block text-align="start">
-                                            <fo:basic-link color="blue" internal-destination="{generate-id(.)}">
-                                                <xsl:value-of select="."/>
-                                            </fo:basic-link>
-                                        </fo:block>
-                                    </fo:table-cell>
-                                    <fo:table-cell>
-                                        <fo:block text-align="end">
-                                            <fo:page-number-citation ref-id="{generate-id(.)}" />
+                                            <xsl:value-of select="."/>
                                         </fo:block>
                                     </fo:table-cell>
                                 </fo:table-row>
@@ -74,14 +66,14 @@
                     </fo:table>
                 </fo:flow>
             </fo:page-sequence>
-            <fo:page-sequence master-reference="rest" initial-page-number="1">
-                <fo:static-content flow-name="main-footer">
-                    <fo:block font-family="serif" text-align="center"><fo:page-number/></fo:block>
-                </fo:static-content>
-                <fo:flow flow-name="main-region-body">
-                    <xsl:apply-templates select="content"/>
-                </fo:flow>
-            </fo:page-sequence>
+<!--            <fo:page-sequence master-reference="rest" initial-page-number="1">-->
+<!--                <fo:static-content flow-name="main-footer">-->
+<!--                    <fo:block font-family="serif" text-align="center"><fo:page-number/></fo:block>-->
+<!--                </fo:static-content>-->
+<!--                <fo:flow flow-name="main-region-body">-->
+<!--                    <xsl:apply-templates select="content"/>-->
+<!--                </fo:flow>-->
+<!--            </fo:page-sequence>-->
         </fo:root>
     </xsl:template>
 
@@ -103,14 +95,7 @@
 
     <xsl:template match="heading">
         <fo:block font-size="16pt" font-weight="bold" font-family="sans-serif" role="H1" margin-top="5mm" margin-bottom="5mm">
-            <xsl:attribute name="id"><xsl:value-of select="generate-id(.)"/></xsl:attribute>
             <xsl:value-of select="."/>
-        </fo:block>
-    </xsl:template>
-
-    <xsl:template match="bookText">
-        <fo:block font-size="12pt" font-family="serif" margin-top="2mm" margin-bottom="2mm" text-align="justify">
-            <xsl:apply-templates/>
         </fo:block>
     </xsl:template>
 
