@@ -13,8 +13,9 @@ import Tooltip from '@mui/material/Tooltip'
 import MenuItem from '@mui/material/MenuItem'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { useKeycloak } from '@react-keycloak/web'
+import { toast } from 'react-toastify'
 
-const pages = ['Create Book','Published Books', 'DashBoard']
+const pages = ['Create Book', 'Published Books', 'DashBoard']
 const settings = ['Logout']
 
 const Navbar = () => {
@@ -30,17 +31,25 @@ const Navbar = () => {
     setAnchorElUser(event.currentTarget)
   }
 
-  const handleCloseNavMenu = () => {
+  const handleCloseNavMenu = event => {
+    if (!keycloak?.authenticated) {
+      toast.info('Login First!!')
+      const text = event.target.innerText
+      console.log(text)
+    } else {
+      const text = event.target.innerText
+      console.log(text)
+    }
     setAnchorElNav(null)
   }
 
-  const handleCloseUserMenu = (event) => {
-    const text=event.target.innerText;
-    if (text === "Logout") {
-      console.log("entered")
-      keycloak.logout();
-    } 
-   
+  const handleCloseUserMenu = event => {
+    const text = event.target.innerText
+    if (text === 'Logout') {
+      console.log('entered')
+      keycloak.logout()
+    }
+
     setAnchorElUser(null)
   }
 
@@ -55,7 +64,7 @@ const Navbar = () => {
             variant='h6'
             noWrap
             component='a'
-            href='#app-bar-with-responsive-menu'
+            href='/'
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -98,7 +107,25 @@ const Navbar = () => {
             >
               {pages.map(page => (
                 <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
+                  <Typography
+                    sx={{
+                      textAlign: 'center',
+                      position: 'relative',
+                      '&:hover::after': {
+                        content: "''", // Creates an empty content for the pseudo-element
+                        position: 'absolute',
+                        bottom: -5, // Position the dot below the text
+                        left: '50%', // Center it horizontally
+                        transform: 'translateX(-50%)', // Adjust for exact centering
+                        width: 8, // Size of the dot
+                        height: 8, // Size of the dot
+                        borderRadius: '50%', // Make it round
+                        backgroundColor: 'red' // Color of the dot
+                      }
+                    }}
+                  >
+                    {page}
+                  </Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -136,12 +163,30 @@ const Navbar = () => {
             ))}
           </Box>
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title='Open settings'>
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0,color: 'white'}}>
-                <p > Welcome! {keycloak.tokenParsed?.given_name} </p>
-                <Avatar alt={keycloak.tokenParsed?.given_name} src='' sx={{ml:1}} />
-              </IconButton>
-            </Tooltip>
+            {keycloak?.authenticated ? (
+              <Tooltip title='Open Menu'>
+                <IconButton
+                  onClick={handleOpenUserMenu}
+                  sx={{ p: 0, color: 'white' }}
+                >
+                  <p> Welcome! {keycloak.tokenParsed?.given_name} </p>
+                  <Avatar
+                    alt={keycloak.tokenParsed?.given_name}
+                    src=''
+                    sx={{ ml: 1 }}
+                  />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Button
+                sx={{ p: 0, color: 'white' }}
+                onClick={() => keycloak.login()}
+              >
+                {' '}
+                Login <Avatar sx={{ ml: 2 }} />{' '}
+              </Button>
+            )}
+
             <Menu
               sx={{ mt: '45px' }}
               id='menu-appbar'
@@ -159,7 +204,7 @@ const Navbar = () => {
               onClose={handleCloseUserMenu}
             >
               {settings.map(setting => (
-                <MenuItem key={setting} onClick={(e)=>handleCloseUserMenu(e)}>
+                <MenuItem key={setting} onClick={e => handleCloseUserMenu(e)}>
                   <Typography sx={{ textAlign: 'center' }}>
                     {setting}
                   </Typography>

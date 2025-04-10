@@ -2,7 +2,7 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-white py-6 mt-10 ">
+    <footer className="bg-gray-900 text-white py-6 shadow-[0_-4px_10px_rgba(0,0,0,0.3)]">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-xl font-semibold">E-Book </h2>
         <p className="text-sm mt-2">Your one-stop destination for digital books.</p>
