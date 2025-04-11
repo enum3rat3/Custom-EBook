@@ -7,9 +7,9 @@ const rootReducer = combineReducers({
   publisher: publisherReducer
 })
 
-const store = configureStore({
+const Store = configureStore({
   reducer: rootReducer,
   middleware: getDefaultMiddleware => getDefaultMiddleware().concat(thunk)
 })
 
-export default store
+export default Store

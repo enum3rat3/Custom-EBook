@@ -13,7 +13,8 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import { toast } from 'react-toastify'
 import PdfViewer from './test'
 import { useKeycloak } from '@react-keycloak/web'
-
+import { useDispatch, useSelector } from 'react-redux'
+import CustomLoadingPage from '../../Utils/CustomLoadingPage'
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -28,11 +29,20 @@ const VisuallyHiddenInput = styled('input')({
 })
 
 const NewBook = () => {
+  const { keycloak, initialized } = useKeycloak()
+  const dispatch = useDispatch()
+  const { publisher } = useSelector(Store => Store)
   const [value, setValue] = useState('1')
   const [filename, setFileName] = useState('')
-  const [filePath, setFilePath] = useState(null)
+  const [fileLocalPath,setFileLocalPath]=useState(null);
+  const [fileS3Path, setFileS3Path] = useState(null)
   const [mediaProgress, setMediaProgress] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+
+
+  if (!initialized) {
+    return <CustomLoadingPage />
+  }
 
   const handleChange = event => {
     const inputValue = event.target.value
@@ -50,39 +60,54 @@ const NewBook = () => {
     }
   }
 
-  const localPdfPath=(e)=>{
+  // const localPdfPath=(e)=>{
 
-    const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
-      const localUrl = URL.createObjectURL(file);
-      setFilePath(localUrl);
-      setFileName(file.name); 
-    } else {
-      alert("Please select a valid PDF file.");
-    }
-  }
+  //   const file = e.target.files[0];
+  //   if (file && file.type === "application/pdf") {
+  //     const localUrl = URL.createObjectURL(file);
+  //     setFilePath(localUrl);
+  //     setFileName(file.name);
+  //   } else {
+  //     alert("Please select a valid PDF file.");
+  //   }
+  // }
 
   const generateFileUrlPath = async event => {
     const file = event.target.files[0]
 
     if (!file) {
-      console.error('No file selected!')
+      toast.error('No file selected!')
       return
     }
 
-    if (!(file instanceof Blob)) {
-      console.error('Invalid file type. Expected a Blob or File.')
+    if (!(file instanceof Blob) || file.type !== 'application/pdf') {
+      toast.error('Select a valid PDF File')
       return
     }
+
+
+  const originalName = file.name
+  const fileNameWithoutExtension = originalName.replace(/\.pdf$/i, '')
+
+console.log('File name without extension:', fileNameWithoutExtension)
 
     const formData = new FormData()
-    formData.append('file', file)
+    formData.append('book', file)
+
     setMediaProgress(true)
     try {
+      console.log(keycloak.token)
       const response = await axios.post(
-        'http://localhost:8081/api/pdf/upload',
-        formData,
+        'http://localhost:8081/api/publisher/upload',
+        formData, // empty body
         {
+          params: {
+            bookName: fileNameWithoutExtension
+          },
+          headers: {
+            Authorization: `Bearer ${keycloak.token}`,
+            Accept: 'application/json'
+          },
           onUploadProgress: ({ loaded, total }) => {
             setUploadProgress(Math.round((loaded * 100) / total))
           }
@@ -91,8 +116,9 @@ const NewBook = () => {
 
       if (response.data) {
         console.log('Uploaded PDF URL:', response.data)
-        setFileName(file.name)
-        setFilePath(response.data)
+        setFileName(fileNameWithoutExtension)
+        setFileLocalPath(response.data.localPath)
+        setFileS3Path("https://"+response.data.s3Path)
         toast.success('pdf uploaded successfully')
       }
     } catch (error) {
@@ -102,7 +128,6 @@ const NewBook = () => {
       setMediaProgress(false)
     }
   }
-
 
   const handlechange = () => {}
   return (
@@ -147,7 +172,7 @@ const NewBook = () => {
                 Upload
                 <VisuallyHiddenInput
                   type='file'
-                  onChange={event => localPdfPath(event)}
+                  onChange={event => generateFileUrlPath(event)}
                 />
               </Button>
             ) : (
@@ -171,7 +196,7 @@ const NewBook = () => {
                 Upload
                 <VisuallyHiddenInput
                   type='file'
-                  onChange={event => localPdfPath(event)}
+                  onChange={event => generateFileUrlPath(event)}
                 />
               </Button>
             )}
@@ -212,7 +237,7 @@ const NewBook = () => {
       </div>
 
       <div className='right-panel'>
-        {filePath && (
+        {fileS3Path && (
           // <object
           //   data={filePath}
           //   type='application/pdf'
@@ -224,8 +249,7 @@ const NewBook = () => {
           //   </p>
           // </object>
           // <iframe src={filePath} width="100%" height="100%"></iframe>
-          <PdfViewer pdfUrl={filePath}/>
-
+          <PdfViewer pdfUrl={fileS3Path} />
         )}
       </div>
     </div>
