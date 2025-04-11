@@ -4,8 +4,10 @@ import com.enum3rat3.customebooks.DTO.BookDTO;
 import com.enum3rat3.customebooks.DTO.LocalS3DTO;
 import com.enum3rat3.customebooks.Repo.ChunkRepo;
 import com.enum3rat3.customebooks.Repo.BookRepo;
+import com.enum3rat3.customebooks.Repo.PublisherRepo;
 import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
+import com.enum3rat3.customebooks.model.Publisher;
 import jakarta.transaction.Transactional;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -21,15 +23,17 @@ public class PublisherService {
     private final BookRepo bookRepo;
     private final ChunkRepo chunkRepo;
     private final AmazonS3Service amazonS3Service;
+    private final PublisherRepo publisherRepo;
 
-    public PublisherService(BookRepo bookRepo, ChunkRepo chunkRepo, AmazonS3Service amazonS3Service) {
+    public PublisherService(BookRepo bookRepo, ChunkRepo chunkRepo, AmazonS3Service amazonS3Service, PublisherRepo publisherRepo) {
         this.bookRepo = bookRepo;
         this.chunkRepo = chunkRepo;
         this.amazonS3Service = amazonS3Service;
+        this.publisherRepo = publisherRepo;
     }
 
     // ======================== Upload PDF =====================
-    public void createBook(String bookName,String localPath, String s3Path, int bookPrice) throws IOException {
+    public void createBook(String bookName,String localPath, String s3Path, int bookPrice,String email) throws IOException {
 
         // Upload Book in Cloud
 //        amazonS3Service.uploadBook(book, bookName.replace(" ", "_"));
@@ -42,7 +46,10 @@ public class PublisherService {
 
         // Save Details
 
-        Book book1 = new Book(bookName, localPath, s3Path, bookPrice, 1);
+
+        Publisher publisher=publisherRepo.findByEmail(email);
+
+        Book book1 = new Book(bookName, localPath, s3Path, bookPrice, publisher.getId());
         book1 = bookRepo.save(book1);
 
 
@@ -53,10 +60,19 @@ public class PublisherService {
         String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";
 
 
-        String localPath = "src/main/resources/upload/" + bookName.replace(" ", "_") + ".pdf";
-        OutputStream os = new FileOutputStream(new File(localPath));
-        os.write(book.getBytes());
+        String folderPath = "uploads/";
+        String fileName = bookName.replace(" ", "_") + ".pdf";
+        String localPath = folderPath + fileName;
 
+        File directory = new File(folderPath);
+        if (!directory.exists()) {
+            directory.mkdirs(); // create the directory (and parents) if it doesn't exist
+        }
+
+        File file = new File(localPath);
+        try (OutputStream os = new FileOutputStream(file)) {
+            os.write(book.getBytes());
+        }
 
         return new LocalS3DTO(localPath, s3Path);
     }
@@ -97,8 +113,11 @@ public class PublisherService {
     }
 
     // ======================== List of Books by Publisher ID =====================
-    public List<Book> listBook(int pubId) {
-        List<Book> books = bookRepo.findAllByPubId(pubId);
+    public List<Book> listBook(String email) {
+
+
+        Publisher publisher=publisherRepo.findByEmail(email);
+        List<Book> books = bookRepo.findAllByPubId(publisher.getId());
         return books;
     }
 

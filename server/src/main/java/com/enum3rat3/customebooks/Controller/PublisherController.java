@@ -19,12 +19,12 @@ public class PublisherController {
     @Autowired
     private PublisherService publisherService;
 
-    @PostMapping("/create")
-    public ResponseEntity<?> createBook(@RequestParam String bookName, @RequestParam String localPath, @RequestParam String s3path,@RequestParam int bookPrice)
+    @PostMapping("/publish")
+    public ResponseEntity<?> createBook(@RequestParam String bookName, @RequestParam String localPath, @RequestParam String s3path,@RequestParam int bookPrice,@RequestParam String pubId)
     {
 
         try {
-           publisherService.createBook(bookName, localPath, s3path,bookPrice);
+           publisherService.createBook(bookName, localPath, s3path,bookPrice,pubId);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -60,7 +60,7 @@ public class PublisherController {
     }
 
     @GetMapping("/book/{authorId}")
-    public ResponseEntity<?> listBooks(@PathVariable int authorId) {
+    public ResponseEntity<?> listBooks(@PathVariable String authorId) {
         List<Book> bookList = new ArrayList<>();
 
         bookList = publisherService.listBook(authorId);

@@ -1,5 +1,6 @@
 package com.enum3rat3.customebooks.Config;
 
+import com.enum3rat3.customebooks.Service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -20,9 +21,10 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain publisherFilterChain(
             HttpSecurity http,
-            @Qualifier("publisherJwtDecoder") JwtDecoder jwtDecoder) throws Exception {
+            @Qualifier("publisherJwtDecoder") JwtDecoder jwtDecoder, UserService userService) throws Exception {
 
-        http
+        http.cors() // 🔥 enable CORS using your CorsFilter bean
+                .and()
                 .csrf(AbstractHttpConfigurer::disable)
                 .securityMatcher("/api/publisher/**")
                 .authorizeHttpRequests(auth -> auth
@@ -31,7 +33,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder)
-                                .jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter())
+                                .jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter(userService))
                         )
                 );
 
@@ -42,9 +44,11 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain consumerFilterChain(
             HttpSecurity http,
-            @Qualifier("consumerJwtDecoder") JwtDecoder jwtDecoder) throws Exception {
+            @Qualifier("consumerJwtDecoder") JwtDecoder jwtDecoder, UserService userService) throws Exception {
 
         http
+                .cors() // 🔥 enable CORS using your CorsFilter bean
+                .and()
                 .securityMatcher("/api/consumer/**")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().hasRole("consumer")
@@ -52,7 +56,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
                                 .decoder(jwtDecoder)
-                                .jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter())
+                                .jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter(userService))
                         )
                 );
 

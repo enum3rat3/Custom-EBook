@@ -4,6 +4,7 @@ import com.enum3rat3.customebooks.Repo.ConsumerRepo;
 import com.enum3rat3.customebooks.Repo.PublisherRepo;
 import com.enum3rat3.customebooks.model.Consumer;
 import com.enum3rat3.customebooks.model.Publisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -29,7 +30,7 @@ public class UserService {
         String lastName= jwt.getClaimAsString("family_name");
         String email = jwt.getClaimAsString("email");
 
-        if (roles.contains("publisher") && !publisherRepository.findByEmail(email)) {
+        if (roles.contains("publisher") && publisherRepository.findByEmail(email)==null) {
             Publisher publisher = new Publisher();
 
             publisher.setFirstName(firstName);
@@ -38,7 +39,7 @@ public class UserService {
             publisherRepository.save(publisher);
         }
 
-        if (roles.contains("consumer") && !consumerRepository.findByEmail(email)) {
+        if (roles.contains("consumer") && consumerRepository.findByEmail(email)==null) {
             Consumer consumer = new Consumer();
             consumer.setFirstName(firstName);
             consumer.setLastName(lastName);
