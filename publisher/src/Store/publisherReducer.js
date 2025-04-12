@@ -25,7 +25,7 @@ export const publishBook = createAsyncThunk(
   async ({ jwt, bookName, localPath, s3path, bookPrice, pubId }) => {
     setAuthHeader(jwt, api)
     try {
-      const response = await api.post(`${BASE_URL}/api/publisher/publish`, {
+      const response = await api.post(`${BASE_URL}/api/publisher/publish`, {},{
         params: {
           bookName: bookName,
           localPath: localPath,
@@ -42,10 +42,31 @@ export const publishBook = createAsyncThunk(
   }
 )
 
+
+export const createChunk = createAsyncThunk(
+  'createChunk',
+  async ({ jwt, bookId, startPage, endPage, chPrice }) => {
+    setAuthHeader(jwt, api)
+    try {
+      const response = await api.post(`${BASE_URL}/api/publisher/book/create/chunk`, {},{
+        params: {
+          bookId,
+          startPage,
+          endPage,
+          chPrice
+        }
+      })
+      return response.data
+    } catch (error) {
+      throw Error(error.response.data.error)
+    }
+  }
+)
+
 export const getBookById = createAsyncThunk(
   'getBookById',
   async ({ jwt, bookId }) => {
-    setAuthHeader({ jwt, api })
+    setAuthHeader(jwt, api)
     try {
       const response = await api.get(`${BASE_URL}/api/publisher/book/${bookId}`)
       return response.data
@@ -54,12 +75,27 @@ export const getBookById = createAsyncThunk(
     }
   }
 )
+
+export const getBookChunks=createAsyncThunk(
+  'getBookChunks',
+  async({jwt,bookId})=>{
+    setAuthHeader(jwt, api)
+    try {
+      const response = await api.get(`${BASE_URL}/api/publisher/chunk/${bookId}`)
+      return response.data
+    } catch (error) {
+      throw Error(error.response.data.error)
+
+    }
+  }
+)
+
 export const getMyBooks = createAsyncThunk(
   'getMyBooks',
   async ({ jwt, email }) => {
     setAuthHeader(jwt, api)
     try {
-      const response = await api.get(`${BASE_URL}/api/publisher/book/${email}`)
+      const response = await api.get(`${BASE_URL}/api/publisher/bookBy/${email}`)
       return response.data
     } catch (error) {
       throw Error(error.response.data.error)
@@ -129,6 +165,32 @@ const publisherSlice = createSlice({
         state.error = null
       })
       .addCase(getBookById.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error
+      })
+      .addCase(getBookChunks.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(getBookChunks.fulfilled, (state, action) => {
+        state.loading = false
+        state.ChunksOfBook = action.payload
+        state.error = null
+      })
+      .addCase(getBookChunks.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error
+      })
+      .addCase(createChunk.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(createChunk.fulfilled, (state, action) => {
+        state.loading = false
+        state.ChunksOfBook = [...state.ChunksOfBook,action.payload]
+        state.error = null
+      })
+      .addCase(createChunk.rejected, (state, action) => {
         state.loading = false
         state.error = action.error
       })

@@ -45,11 +45,17 @@ public class PublisherController {
         return ResponseEntity.ok().body(localS3DTO);
     }
 
-    @PostMapping("/book/chunks")
+    @PostMapping("/book/create/chunk")
     public ResponseEntity<?> chunkPDF(@RequestParam int bookId, @RequestParam int startPage, @RequestParam int endPage, @RequestParam int chPrice) throws IOException {
-        String response = publisherService.chunkPDF(bookId, startPage, endPage, chPrice);
+        Chunk response = publisherService.chunkPDF(bookId, startPage, endPage, chPrice);
 
         return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/book/{bookId}")
+    public ResponseEntity<?> getBookById(@PathVariable int bookId) {
+        Book book=publisherService.getBookById(bookId);
+        return ResponseEntity.ok().body(book);
     }
 
     @DeleteMapping("/book/{bookId}")
@@ -59,7 +65,7 @@ public class PublisherController {
         return ResponseEntity.ok().body("Book Deleted: " + bookId);
     }
 
-    @GetMapping("/book/{authorId}")
+    @GetMapping("/bookBy/{authorId}")
     public ResponseEntity<?> listBooks(@PathVariable String authorId) {
         List<Book> bookList = new ArrayList<>();
 

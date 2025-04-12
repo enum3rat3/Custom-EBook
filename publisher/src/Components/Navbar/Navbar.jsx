@@ -14,12 +14,15 @@ import MenuItem from '@mui/material/MenuItem'
 import AutoStoriesIcon from '@mui/icons-material/AutoStories'
 import { useKeycloak } from '@react-keycloak/web'
 import { toast } from 'react-toastify'
+import CustomLoadingPage from '../../Utils/CustomLoadingPage'
+import { useNavigate } from 'react-router'
 
-const pages = ['Create Book', 'Published Books', 'DashBoard']
+const pages = ['Publish Book', 'My Books', 'DashBoard']
 const settings = ['Logout']
 
 const Navbar = () => {
-  const { keycloak } = useKeycloak()
+  const { keycloak, initialized } = useKeycloak()
+  const navigate = useNavigate();
 
   const [anchorElNav, setAnchorElNav] = React.useState(null)
   const [anchorElUser, setAnchorElUser] = React.useState(null)
@@ -32,14 +35,22 @@ const Navbar = () => {
   }
 
   const handleCloseNavMenu = event => {
+
     if (!keycloak?.authenticated) {
       toast.info('Login First!!')
-      const text = event.target.innerText
-      console.log(text)
-    } else {
-      const text = event.target.innerText
-      console.log(text)
+      navigate("/login");
     }
+
+    const text = event.target.innerText.trim().toUpperCase();
+
+    if (text === 'PUBLISH BOOK') {
+      navigate('/publish');
+    } else if (text === 'MY BOOKS') {
+      navigate('/my-books');
+    }
+    
+    console.log(text);
+
     setAnchorElNav(null)
   }
 
@@ -51,6 +62,10 @@ const Navbar = () => {
     }
 
     setAnchorElUser(null)
+  }
+
+  if (!initialized) {
+    return <CustomLoadingPage />
   }
 
   return (

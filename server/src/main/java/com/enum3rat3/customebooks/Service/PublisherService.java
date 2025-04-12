@@ -79,7 +79,7 @@ public class PublisherService {
     }
 
     // ======================== Chunk PDF =====================
-    public String chunkPDF(int bookId, int startPage, int endPage, int chPrice) throws IOException {
+    public Chunk chunkPDF(int bookId, int startPage, int endPage, int chPrice) throws IOException {
         Book bk = bookRepo.findById(bookId).orElse(null);
 
         if(bk != null) {
@@ -107,18 +107,17 @@ public class PublisherService {
             Chunk ch = new Chunk(bookId, startPage, endPage, chPrice, chunkS3Path, chunkLocalPath);
 
             chunkRepo.save(ch);
-            return chunkS3Path;
+            return ch;
         }
 
-        return "Book not found";
+        return null;
     }
 
     // ======================== List of Books by Publisher ID =====================
     public List<Book> listBook(String email) {
-
-
         Publisher publisher=publisherRepo.findByEmail(email);
         List<Book> books = bookRepo.findAllByPubId(publisher.getId());
+
         return books;
     }
 
@@ -166,5 +165,9 @@ public class PublisherService {
             file1.delete();
             chunkRepo.deleteById(chunkId);
         }
+    }
+
+    public Book getBookById(int bookId) {
+        return bookRepo.findByBid(bookId);
     }
 }

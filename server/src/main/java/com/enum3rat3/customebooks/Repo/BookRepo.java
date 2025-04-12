@@ -13,4 +13,6 @@ public interface BookRepo extends JpaRepository<Book, Integer> {
     List<Book> findAllByPubId(int pubId);
 
     void deleteByBid(int bookId);
+
+    Book findByBid(int bookId);
 }

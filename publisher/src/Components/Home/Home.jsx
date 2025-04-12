@@ -1,20 +1,27 @@
 import * as React from 'react'
 import { useKeycloak } from '@react-keycloak/web'
 import { toast } from 'react-toastify'
+import { useNavigate } from 'react-router'
 
 const Home = () => {
     const { keycloak } = useKeycloak()
+    const navigate=useNavigate();
     const handlePublishButton=()=>{
 
         if(!keycloak?.authenticated){
           toast.info("Login First!!")
         }
+
+        navigate("/publish")
+
+        
     }
 
     const handleViewBooks=()=>{
       if(!keycloak?.authenticated){
         toast.info("Login First!!")
       }
+      navigate("/my-books")
     }
 
   return (
@@ -34,7 +41,7 @@ const Home = () => {
               Publish Book
             </button>
             <button className='bg-[#1F2937] hover:bg-gray-700 text-white font-semibold px-6 py-3 rounded-2xl shadow-md transition' onClick={handleViewBooks}>
-              Published Books
+               View My Books
             </button>
           </div>
         </div>
