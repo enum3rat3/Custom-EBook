@@ -38,6 +38,11 @@ public class XMLGenerator {
         authorTag.appendChild(doc.createTextNode(author));
         root.appendChild(authorTag);
 
+        // Background Color Tag
+        Element colorTag = doc.createElement("color");
+        colorTag.appendChild(doc.createTextNode("#426584"));
+        root.appendChild(colorTag);
+
         // Content Tag
         Element contextTag = doc.createElement("content");
         root.appendChild(contextTag);

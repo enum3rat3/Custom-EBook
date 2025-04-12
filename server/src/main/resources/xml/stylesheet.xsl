@@ -1,108 +1,58 @@
-<?xml version="1.0" encoding="utf-8"?>
-<xsl:stylesheet version="1.0"
-                xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:fo="http://www.w3.org/1999/XSL/Format"
-                xmlns:fox="http://xmlgraphics.apache.org/fop/extensions">
-    <xsl:output method="xml" indent="yes"/>
+                exclude-result-prefixes="fo">
+
+    <!-- Template for the root of the document -->
     <xsl:template match="/doc">
-        <fo:root xml:lang="en" font-family="serif">
+        <fo:root>
             <fo:layout-master-set>
-                <fo:simple-page-master master-name="title"
-                                       page-height="29.7cm" page-width="21.0cm" margin="2cm">
-                    <fo:region-body region-name="title-region-body"/>
+                <!-- Cover page layout -->
+                <fo:simple-page-master master-name="cover" page-height="297mm" page-width="210mm">
+                    <fo:region-body display-align="center"  background-color="{color}"/>
                 </fo:simple-page-master>
-                <fo:simple-page-master master-name="toc"
-                                       page-height="29.7cm" page-width="21.0cm" margin="2cm">
-                    <fo:region-body region-name="toc-region-body"/>
-                </fo:simple-page-master>
-                <fo:simple-page-master master-name="rest"
-                                       page-height="29.7cm" page-width="21.0cm" margin="2cm">
-                    <fo:region-body region-name="main-region-body"/>
-                    <fo:region-after region-name="main-footer"/>
+
+                <!-- Content page layout -->
+                <fo:simple-page-master master-name="content" page-height="297mm" page-width="210mm">
+                    <fo:region-body margin="20mm"/>
                 </fo:simple-page-master>
             </fo:layout-master-set>
 
-            <fo:declarations>
-                <x:xmpmeta xmlns:x="adobe:ns:meta/">
-                    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-                        <rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">
-                            <dc:title><xsl:value-of select="/doc/title"/></dc:title>
-                            <dc:creator><xsl:value-of select="/doc/author"/></dc:creator>
-                        </rdf:Description>
-                    </rdf:RDF>
-                </x:xmpmeta>
-            </fo:declarations>
-
-<!--            <fo:bookmark-tree>-->
-<!--                <xsl:for-each select="content/heading">-->
-<!--                    <fo:bookmark internal-destination="{generate-id(.)}">-->
-<!--                        <fo:bookmark-title><xsl:value-of select="."/></fo:bookmark-title>-->
-<!--                    </fo:bookmark>-->
-<!--                </xsl:for-each>-->
-<!--            </fo:bookmark-tree>-->
-
-            <fo:page-sequence master-reference="title">
-                <fo:flow flow-name="title-region-body">
-                    <xsl:apply-templates select="title"/>
-                    <xsl:apply-templates select="author"/>
+            <!-- Generate Cover Page -->
+            <fo:page-sequence master-reference="cover">
+                <fo:flow flow-name="xsl-region-body">
+                    <!-- Cover Page Background Color -->
+                    <fo:block height="100%" width="100%" text-align="center" space-before="50mm" >
+                        <!-- Title -->
+                        <fo:block font-size="36pt" font-weight="bold" color="white">
+                            <xsl:value-of select="title"/>
+                        </fo:block>
+                        <!-- Author -->
+                        <fo:block font-size="18pt" font-style="italic" color="white">
+                            Written by  <xsl:value-of select="author"/>
+                        </fo:block>
+                    </fo:block>
                 </fo:flow>
             </fo:page-sequence>
-            <fo:page-sequence master-reference="toc">
-                <fo:flow flow-name="toc-region-body">
-                    <fo:block font-size="16pt" font-weight="bold" font-family="sans-serif">Table of contents</fo:block>
-                    <fo:table table-layout="fixed" width="100%" border-collapse="separate">
-                        <fo:table-column column-width="15cm"/>
-                        <fo:table-body font-size="12pt" font-family="serif">
-                            <xsl:for-each select="content/heading">
-                                <fo:table-row line-height="14pt">
-                                    <fo:table-cell>
-                                        <fo:block text-align="start">
-                                            <xsl:value-of select="."/>
-                                        </fo:block>
-                                    </fo:table-cell>
-                                </fo:table-row>
-                            </xsl:for-each>
-                        </fo:table-body>
-                    </fo:table>
+
+            <!-- Table of Contents -->
+            <fo:page-sequence master-reference="content">
+                <fo:flow flow-name="xsl-region-body">
+                    <fo:block font-size="18pt" font-weight="bold" text-align="center" space-after="20mm">
+                        Table of Contents
+                    </fo:block>
+
+                    <!-- Loop through the headings and create the table of contents -->
+                    <xsl:for-each select="content/heading">
+                        <fo:block font-size="12pt" line-height="14pt" space-after="5mm">
+                            <fo:inline>
+                                <xsl:value-of select="."/>
+                            </fo:inline>
+                        </fo:block>
+                    </xsl:for-each>
                 </fo:flow>
             </fo:page-sequence>
-<!--            <fo:page-sequence master-reference="rest" initial-page-number="1">-->
-<!--                <fo:static-content flow-name="main-footer">-->
-<!--                    <fo:block font-family="serif" text-align="center"><fo:page-number/></fo:block>-->
-<!--                </fo:static-content>-->
-<!--                <fo:flow flow-name="main-region-body">-->
-<!--                    <xsl:apply-templates select="content"/>-->
-<!--                </fo:flow>-->
-<!--            </fo:page-sequence>-->
         </fo:root>
-    </xsl:template>
-
-
-    <xsl:template match="title">
-        <fo:block font-size="20pt" font-weight="bold" font-family="sans-serif" text-align="center">
-            <xsl:value-of select="."/>
-        </fo:block>
-    </xsl:template>
-
-    <xsl:template match="author">
-        <fo:block font-size="12pt" font-family="serif" text-align="center">
-            <xsl:value-of select="."/>
-        </fo:block>
-        <fo:block text-align="center">
-            <fo:external-graphic src="apache-fop-logo.jpg" fox:alt-text="Apache FOP logo on the title page"/>
-        </fo:block>
-    </xsl:template>
-
-    <xsl:template match="heading">
-        <fo:block font-size="16pt" font-weight="bold" font-family="sans-serif" role="H1" margin-top="5mm" margin-bottom="5mm">
-            <xsl:value-of select="."/>
-        </fo:block>
-    </xsl:template>
-
-    <xsl:template match="emph">
-        <fo:inline font-style="italic">
-            <xsl:apply-templates/>
-        </fo:inline>
     </xsl:template>
 
 </xsl:stylesheet>

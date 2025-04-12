@@ -62,7 +62,7 @@ public class ConsumerService {
     }
 
     public String createPDF(String title, String authorName, List<String> headings) throws Exception {
-        File xmlFile = new File("src/main/resources/xml/test.xml");
+        File xmlFile = new File("src/main/resources/xml/index.xml");
         File xsltFile = new File("src/main/resources/xml/stylesheet.xsl");
         File pdfFile = new File("src/main/resources/index-page/" + title + ".pdf");
 
@@ -83,7 +83,7 @@ public class ConsumerService {
             Result res = new SAXResult(fop.getDefaultHandler());
 
             transformer.transform(src, res);
-            
+
             return "src/main/resources/index-page/" + title + ".pdf";
         } catch (TransformerException e) {
             throw new RuntimeException(e);
@@ -97,7 +97,7 @@ public class ConsumerService {
 
             PDFMergerUtility mergerUtility = new PDFMergerUtility();
             mergerUtility.setDestinationFileName(tempPdf);
-            
+
             for(String chunkPath: chunkPaths)
             {
                 mergerUtility.addSource(chunkPath);
