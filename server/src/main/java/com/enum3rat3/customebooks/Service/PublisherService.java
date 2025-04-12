@@ -51,6 +51,7 @@ public class PublisherService {
 
         Book book1 = new Book(bookName, localPath, s3Path, bookPrice, publisher.getId());
         book1 = bookRepo.save(book1);
+        System.out.println(book1.toString());
 
 
     }

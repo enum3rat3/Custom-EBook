@@ -5,7 +5,13 @@ import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
-import { Button, Grid, LinearProgress, TextField } from '@mui/material'
+import {
+  Button,
+  CircularProgress,
+  Grid,
+  LinearProgress,
+  TextField
+} from '@mui/material'
 import { styled } from '@mui/material/styles'
 import axios from 'axios'
 
@@ -15,7 +21,10 @@ import PdfViewer from './test'
 import { useKeycloak } from '@react-keycloak/web'
 import { useDispatch, useSelector } from 'react-redux'
 import CustomLoadingPage from '../../Utils/CustomLoadingPage'
-
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import { Typography } from '@mui/material'
+import { publishBook } from '../../Store/publisherReducer'
+import { useNavigate } from 'react-router'
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -31,20 +40,16 @@ const VisuallyHiddenInput = styled('input')({
 const NewBook = () => {
   const { keycloak, initialized } = useKeycloak()
   const dispatch = useDispatch()
-  const { publisher } = useSelector(Store => Store)
+  const navigate = useNavigate()
+  const publisher = useSelector(state => state.publisher)
   const [value, setValue] = useState('1')
   const [filename, setFileName] = useState('')
-  const [fileLocalPath,setFileLocalPath]=useState(null);
+  const [fileLocalPath, setFileLocalPath] = useState(null)
   const [fileS3Path, setFileS3Path] = useState(null)
   const [mediaProgress, setMediaProgress] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
+  const [bookTitle, setBookTitle] = useState('')
 
-
-  if (!initialized) {
-    return <CustomLoadingPage />
-  }
-
-  const handleChange = event => {
+  const handleValueChange = event => {
     const inputValue = event.target.value
 
     // Allow only whole numbers (no decimals, no negatives)
@@ -54,23 +59,15 @@ const NewBook = () => {
   }
 
   const handleBlur = () => {
-    // Ensure value is not empty or zero when user leaves the field
     if (value === '' || parseInt(value, 10) < 1) {
-      setValue('1') // Set minimum value to 1 (or adjust as needed)
+      setValue('1')
     }
   }
 
-  // const localPdfPath=(e)=>{
-
-  //   const file = e.target.files[0];
-  //   if (file && file.type === "application/pdf") {
-  //     const localUrl = URL.createObjectURL(file);
-  //     setFilePath(localUrl);
-  //     setFileName(file.name);
-  //   } else {
-  //     alert("Please select a valid PDF file.");
-  //   }
-  // }
+  const handleTitleChange = event => {
+    const inputValue = event.target.value
+    setBookTitle(inputValue)
+  }
 
   const generateFileUrlPath = async event => {
     const file = event.target.files[0]
@@ -85,11 +82,10 @@ const NewBook = () => {
       return
     }
 
+    const originalName = file.name
+    const fileNameWithoutExtension = originalName.replace(/\.pdf$/i, '')
 
-  const originalName = file.name
-  const fileNameWithoutExtension = originalName.replace(/\.pdf$/i, '')
-
-console.log('File name without extension:', fileNameWithoutExtension)
+    console.log('File name without extension:', fileNameWithoutExtension)
 
     const formData = new FormData()
     formData.append('book', file)
@@ -99,7 +95,7 @@ console.log('File name without extension:', fileNameWithoutExtension)
       console.log(keycloak.token)
       const response = await axios.post(
         'http://localhost:8081/api/publisher/upload',
-        formData, // empty body
+        formData,
         {
           params: {
             bookName: fileNameWithoutExtension
@@ -107,9 +103,6 @@ console.log('File name without extension:', fileNameWithoutExtension)
           headers: {
             Authorization: `Bearer ${keycloak.token}`,
             Accept: 'application/json'
-          },
-          onUploadProgress: ({ loaded, total }) => {
-            setUploadProgress(Math.round((loaded * 100) / total))
           }
         }
       )
@@ -118,7 +111,8 @@ console.log('File name without extension:', fileNameWithoutExtension)
         console.log('Uploaded PDF URL:', response.data)
         setFileName(fileNameWithoutExtension)
         setFileLocalPath(response.data.localPath)
-        setFileS3Path("https://"+response.data.s3Path)
+        const temp = 'https://' + response.data.s3Path
+        setFileS3Path(temp)
         toast.success('pdf uploaded successfully')
       }
     } catch (error) {
@@ -129,7 +123,34 @@ console.log('File name without extension:', fileNameWithoutExtension)
     }
   }
 
-  const handlechange = () => {}
+  const submitBook = () => {
+    try{
+
+      dispatch(
+        publishBook({
+          jwt: keycloak.token,
+          bookName: bookTitle,
+          localPath: fileLocalPath,
+          s3path: fileS3Path,
+          bookPrice: parseInt(value, 10),
+          pubId: keycloak.tokenParsed?.email
+        })
+      )
+      toast.success('book publish successfully.')
+      navigate('/my-books')
+    }catch(e){
+      toast.error('internal server error try again.')
+    }
+  }
+
+  useEffect(() => {}, [publisher.loading])
+  if (publisher.loading) {
+    return <CustomLoadingPage />
+  }
+  if (!initialized) {
+    return <CustomLoadingPage />
+  }
+
   return (
     <div className='m-3 p-3 newbook-main'>
       <div className='left-panel p-3'>
@@ -138,6 +159,8 @@ console.log('File name without extension:', fileNameWithoutExtension)
             id='outlined-basic'
             label='BOOK TITLE'
             variant='outlined'
+            value={bookTitle}
+            onChange={handleTitleChange}
           />
           <TextField
             id='outlined-basic'
@@ -145,35 +168,19 @@ console.log('File name without extension:', fileNameWithoutExtension)
             variant='outlined'
             type='text' // Use text to control input behavior
             value={value}
-            onChange={handleChange}
+            onChange={handleValueChange}
             onBlur={handleBlur}
             inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} // Ensures only numeric input
           />
           <div className='flex flex-row items-center space-x-2'>
             {mediaProgress ? (
               <Button
-                component='label'
-                role={undefined}
                 variant='contained'
-                tabIndex={-1}
-                startIcon={<CloudUploadIcon />}
-                sx={{
-                  fontSize: '0.75rem', // Reduce text size
-                  minWidth: '100px',
-                  minHeight: '55px',
-                  display: 'flex', // Ensures proper flexbox behavior
-                  alignItems: 'center', // Centers vertically
-                  justifyContent: 'center', // Centers horizontally
-                  gap: '4px',
-                  backgroundColor: '#1F2937'
-                }}
+                sx={{ backgroundColor: '#1F2937', minHeight: '55px' }}
                 disabled
               >
-                Upload
-                <VisuallyHiddenInput
-                  type='file'
-                  onChange={event => generateFileUrlPath(event)}
-                />
+                <CircularProgress size={24} color='inherit' />
+                {/* Uploading.... */}
               </Button>
             ) : (
               <Button
@@ -207,28 +214,20 @@ console.log('File name without extension:', fileNameWithoutExtension)
               value={[filename]}
             />
           </div>
-          {mediaProgress && (
-            <div className='my-4'>
-              <LinearProgress
-                variant='buffer'
-                value={uploadProgress}
-                valueBuffer={5}
-              />
-              <p>{uploadProgress}% uploaded</p>
-            </div>
-          )}
           {mediaProgress ? (
             <Button
               variant='contained'
               sx={{ backgroundColor: '#1F2937', minHeight: '55px' }}
               disabled
             >
-              PUBLISH BOOK
+              <CircularProgress size={24} color='inherit' />
+              Uploading....
             </Button>
           ) : (
             <Button
               variant='contained'
               sx={{ backgroundColor: '#1F2937', minHeight: '55px' }}
+              onClick={submitBook}
             >
               PUBLISH BOOK
             </Button>
@@ -237,19 +236,24 @@ console.log('File name without extension:', fileNameWithoutExtension)
       </div>
 
       <div className='right-panel'>
-        {fileS3Path && (
-          // <object
-          //   data={filePath}
-          //   type='application/pdf'
-          //   width='100%'
-          //   height='100%'
-          // >
-          //   <p>
-          //     manully download <a href={filePath}> PDF!</a>
-          //   </p>
-          // </object>
-          // <iframe src={filePath} width="100%" height="100%"></iframe>
+        {fileS3Path ? (
           <PdfViewer pdfUrl={fileS3Path} />
+        ) : (
+          <Box
+            display='flex'
+            flexDirection='column'
+            alignItems='center'
+            justifyContent='center'
+            height='100%'
+            width='100%'
+            textAlign='center'
+            sx={{ bgcolor: '#f9fafb' }}
+          >
+            <PictureAsPdfIcon sx={{ fontSize: 80, color: '#9ca3af', mb: 2 }} />
+            <Typography variant='h5' color='text.secondary' gutterBottom>
+              No PDF Preview Available
+            </Typography>
+          </Box>
         )}
       </div>
     </div>
