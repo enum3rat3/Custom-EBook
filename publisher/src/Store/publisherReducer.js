@@ -50,10 +50,10 @@ export const createChunk = createAsyncThunk(
     try {
       const response = await api.post(`${BASE_URL}/api/publisher/book/create/chunk`, {},{
         params: {
-          bookId,
-          startPage,
-          endPage,
-          chPrice
+          bookId:bookId,
+          startPage:startPage,
+          endPage:endPage,
+          chPrice:chPrice
         }
       })
       return response.data
@@ -102,6 +102,34 @@ export const getMyBooks = createAsyncThunk(
     }
   }
 )
+
+export const deleteChunk = createAsyncThunk(
+  'deleteChunk',
+  async ({ jwt, chunkId }) => {
+    setAuthHeader(jwt, api)
+    try {
+      const response = await api.delete(`${BASE_URL}/api/publisher/chunk/${chunkId}`)
+      return response.data
+    } catch (error) {
+      throw Error(error.response.data.error)
+    }
+  }
+)
+
+export const deleteBook = createAsyncThunk(
+  'deleteBook',
+  async ({ jwt, bookId }) => {
+    setAuthHeader(jwt, api)
+    try {
+      const response = await api.delete(`${BASE_URL}/api/publisher/book/${bookId}`)
+      return response.data
+    } catch (error) {
+      throw Error(error.response.data.error)
+    }
+  }
+)
+
+
 
 const publisherSlice = createSlice({
   name: 'publisher',
@@ -191,6 +219,39 @@ const publisherSlice = createSlice({
         state.error = null
       })
       .addCase(createChunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error
+      })
+      .addCase(deleteChunk.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteChunk.fulfilled, (state, action) => {
+        const deletedChunkId = action.meta.arg.chunkId;
+      
+        state.loading = false;
+        state.ChunksOfBook = state.ChunksOfBook.filter(
+          (chunk) => chunk.chId !== deletedChunkId
+        );
+        state.error = null;
+      })
+      .addCase(deleteChunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error
+      })
+      .addCase(deleteBook.pending, state => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteBook.fulfilled, (state, action) => {
+        const deletedBookId = action.meta.arg.bookId;
+        state.loading = false;
+        state.MyBooks = state.MyBooks.filter(
+          (book) => book.bid !== deletedBookId
+        );
+        state.error = null;
+      })
+      .addCase(deleteBook.rejected, (state, action) => {
         state.loading = false
         state.error = action.error
       })

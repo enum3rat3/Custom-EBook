@@ -11,10 +11,11 @@ import Stack from '@mui/material/Stack'
 import { useDispatch, useSelector } from 'react-redux'
 import CustomLoadingPage from '../../Utils/CustomLoadingPage'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import { getMyBooks } from '../../Store/publisherReducer'
+import { deleteBook, getBookById, getMyBooks } from '../../Store/publisherReducer'
 import { useNavigate } from 'react-router'
 import { useKeycloak } from '@react-keycloak/web'
 import { toast } from 'react-toastify'
+import { Box } from '@mui/material'
 
 
 
@@ -32,13 +33,20 @@ const BookList = () => {
     setPage(value);
   };
   const handleCardClick = data => {
-    data=parseInt(data, 10)
+    data = parseInt(data, 10)
+    dispatch(getBookById({ jwt: keycloak.token, bookId: data }))
     navigate(`/my-book/${data}`)
   }
 
+  const handleDeleteBook = (data) => {
+    try {
+      dispatch(deleteBook({ jwt: keycloak.token, bookId: parseInt(data, 10) }))
+      toast.success('book deleted successfully!!')
+    } catch (error) {
+      toast.error("error while deleting Book")
+    }
+  }
 
-  
-  
   useEffect(() => {
     try {
       dispatch(getMyBooks({ jwt: keycloak.token, email: keycloak?.tokenParsed.email }))
@@ -46,14 +54,14 @@ const BookList = () => {
       toast.error("internal server error!")
       navigate("/")
     }
-  },[])
-  
+  }, [])
+
   if (!initialized) {
     return <CustomLoadingPage />
   }
-  if(publisher.loading){
+  if (publisher.loading) {
     return (
-      <CustomLoadingPage/>
+      <CustomLoadingPage />
     )
   }
   if (publisher.MyBooks.length > 0) {
@@ -74,16 +82,19 @@ const BookList = () => {
                   }
                 }}
                 key={idx}
-                onClick={() => {
-                  handleCardClick(data.bid)
-                }}
+           
               >
                 <CardMedia
                   sx={{ height: 140 }}
                   image='http://4.bp.blogspot.com/-4UB7EoORmD8/UzWi-cH_iRI/AAAAAAAACm0/xdiq_4oATCg/s1600/o-BALD-EAGLE-free.jpg'
                   title='green iguana'
+                  onClick={() => {
+                    handleCardClick(data.bid)
+                  }}
                 />
-                <CardContent>
+                <CardContent      onClick={() => {
+                  handleCardClick(data.bid)
+                }}>
                   <Typography gutterBottom variant='h5' component='div'>
                     {data.bkName}
                   </Typography>
@@ -93,8 +104,13 @@ const BookList = () => {
                   </Typography>
                 </CardContent>
                 <CardActions>
-                  <Button size='small'>Delete</Button>
-                  <Button size='small'>Learn More</Button>
+                  <Button size='small' onClick={() => handleDeleteBook(data.bid)} sx={{
+                    color: 'red',
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                      color: 'darkred', // Optional: darker red on hover
+                    },
+                  }} >Delete</Button>
                 </CardActions>
               </Card>
             ))}
@@ -128,7 +144,29 @@ const BookList = () => {
     )
   }
   return (
-    <h1>Kindly,Publish the Book First</h1>
+<div className="flex h-[80vh] justify-center items-center">
+ 
+    <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      mt: 6,
+      color: 'gray',
+      height:'50%',
+      width:'100%'
+    }}
+  >
+
+    <Typography variant='h5' sx={{ fontWeight: 'bold' }}>
+      No Book is Published Yet
+    </Typography>
+    <Typography variant='body2' sx={{ mt: 1 }}>
+      You can start by Publishing New Book.
+    </Typography>
+  </Box>
+  </div>
   )
 
 

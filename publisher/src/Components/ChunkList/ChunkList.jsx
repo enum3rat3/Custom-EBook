@@ -22,14 +22,15 @@ import DialogTitle from '@mui/material/DialogTitle'
 import Slide from '@mui/material/Slide'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
-import { Grid, LinearProgress, TextField } from '@mui/material'
+import { CircularProgress, Grid, LinearProgress, TextField } from '@mui/material'
 import { toast } from 'react-toastify'
-import { getBookById, getBookChunks } from '../../Store/publisherReducer'
+import { createChunk, deleteBook, deleteChunk, getBookById, getBookChunks } from '../../Store/publisherReducer'
 import { href, useNavigate, useParams } from 'react-router'
 import { useKeycloak } from '@react-keycloak/web'
 import CustomLoadingPage from '../../Utils/CustomLoadingPage'
 import { useDispatch, useSelector } from 'react-redux'
-
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { Box } from '@mui/material';
 const Accordion = styled(props => (
   <MuiAccordion disableGutters elevation={0} square {...props} />
 ))(({ theme }) => ({
@@ -92,6 +93,9 @@ const ChunkList = () => {
 
 
   const handleClose = () => {
+    setValue('1');
+    setEndingPageNo('1');
+    setStartingPageNo('1');
     setOpen(false)
   }
 
@@ -136,8 +140,7 @@ const ChunkList = () => {
     setExpanded(newExpanded ? panel : false)
   }
 
-  const createChunk = () => {
-
+  const createChunkhandler = () => {
     const p = parseInt(value, 10)
     const sp = parseInt(startingPageNo, 10)
     const ep = parseInt(endingPageNo, 10)
@@ -148,19 +151,15 @@ const ChunkList = () => {
     }
 
     try {
-      dispatch(createChunk({
-        jwt: keycloak.token,
-        bookId: id,
-        startPage: sp,
-        endPage: ep,
-        chPrice: p
-      }))
+      dispatch(createChunk({ jwt: keycloak.token, bookId: parseInt(id, 10), startPage: sp, endPage: ep, chPrice: p }))
       toast.success('Chunk Created Successfully')
-      
+      handleClose();
+      navigate(`/my-book/${parseInt(id, 10)}`)
     } catch (error) {
       toast.error('Error While Creating Chunk. Try Again!!!! ')
+      handleClose();
+      return;
     }
-    handleClose();
 
 
 
@@ -174,11 +173,29 @@ const ChunkList = () => {
   }
 
 
+  const handleDeleteBook = () => {
+    try {
+      dispatch(deleteBook({jwt:keycloak.token,bookId:parseInt(id,10)}))
+      toast.success('book deleted successfully!!')
+      navigate('/my-books')
+    } catch (error) {
+      toast.error("error while deleting Book")
+    }
+  }
+
+  const deleteChunkHandler = (data) => {
+    try {
+      dispatch(deleteChunk({ jwt: keycloak.token, chunkId: parseInt(data.chId, 10) }))
+      toast.success("chunk deleted successfully!!")
+
+    } catch (error) {
+      toast.error("error while deleting Chunk")
+    }
+  }
+
 
   useEffect(() => {
     try {
-      console.log(id)
-      dispatch(getBookById({ jwt: keycloak.token, bookId: id }))
       dispatch(getBookChunks({ jwt: keycloak.token, bookId: parseInt(id, 10) }))
     } catch (error) {
       toast.error("internal server error")
@@ -187,7 +204,12 @@ const ChunkList = () => {
   }, [])
 
 
+
   if (!initialized) {
+    return <CustomLoadingPage />
+  }
+
+  if (publisher.loading) {
     return <CustomLoadingPage />
   }
 
@@ -202,9 +224,20 @@ const ChunkList = () => {
             alt='green iguana'
           />
           <CardContent sx={{ flex: '1 0 auto' }}>
-            <Typography component='div' variant='h5'>
-              {publisher.BookById.bkName}
-            </Typography>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              <div >
+                <Typography component='div' variant='h5'>
+                  {publisher.BookById.bkName.toUpperCase()}
+                </Typography>
+              </div>
+              <div style={{ display: 'flex' }}>
+                <span>Price : </span>
+                <span>
+                  {publisher.BookById.bookPrice + " Rs."}
+                </span>
+              </div>
+
+            </div>
             <Typography variant='body2' sx={{ color: 'text.secondary' }}>
               Lizards are a widespread group of squamate reptiles, with over 6,000
               species, ranging across all continents except Antarctica
@@ -249,6 +282,23 @@ const ChunkList = () => {
                   View Book
                 </Button>
               </a>
+              <Button
+                size='small'
+                sx={{
+                  minWidth: '130px',
+                  minHeight: '30px',
+                  display: 'flex', // Ensures proper flexbox behavior
+                  alignItems: 'center', // Centers vertically
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '0.75rem',
+                  backgroundColor: 'red',
+
+                }}
+                onClick={()=>handleDeleteBook()}
+              >
+                Delete Book
+              </Button>
 
               <Dialog
                 open={open}
@@ -322,48 +372,82 @@ const ChunkList = () => {
                       backgroundColor: '#1F2937',
                       marginRight: 3
                     }}
-                    onClick={createChunk}
+                    onClick={createChunkhandler}
                   >
                     Create
                   </Button>
+
+
                 </DialogActions>
               </Dialog>
             </CardActions>
           </CardContent>
         </Card>
         <h1 className='mb-2 font-bold font-mono'> Chunk Details : </h1>
-        <div className='flex-1 overflow-y-auto'>
-          {publisher.ChunksOfBook &&
-            publisher.ChunksOfBook.map((data, idx) => (
-              <Accordion
-                sx={{ marginTop: 2, borderRadius: 2, boxShadow: 3 }}
-                key={idx}
-                expanded={expanded === `panel+${idx}`}
-                onChange={handleChange(`panel+${idx}`)}
-              >
-                <AccordionSummary
-                  aria-controls='panel1d-content'
-                  id='panel1d-header'
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <Typography component='span'>
-                      {getFileNameWithoutExtension(data.chS3Path)}
-                    </Typography>
-                    <Typography component='span'>
-                      {data.chPrice + " Rs."}
-                    </Typography>
-                  </div>
+        {
+
+          publisher.ChunksOfBook.length > 0 ? (
+            <div className='flex-1 overflow-y-auto'>
+              {
+                publisher.ChunksOfBook.map((data, idx) => (
+                  <Accordion
+                    sx={{ marginTop: 2, borderRadius: 2, boxShadow: 3 }}
+                    key={idx}
+                    expanded={expanded === `panel+${idx}`}
+                    onChange={handleChange(`panel+${idx}`)}
+                  >
+                    <AccordionSummary
+                      aria-controls='panel1d-content'
+                      id='panel1d-header'
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <Typography component='span'>
+                          {getFileNameWithoutExtension(data.chS3Path)}
+                        </Typography>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+                          <Typography component='span'>
+                            {data.chPrice + " Rs."}
+                          </Typography>
+                          <Button >
+                            <DeleteForeverIcon sx={{ color: 'red' }} onClick={() => deleteChunkHandler(data)} />
+                          </Button>
+                        </div>
+                      </div>
 
 
-                </AccordionSummary>
-                <AccordionDetails>
-                  <div className='flex align-center justify-center'>
-                    <PdfViewer pdfUrl={"https://" + data.chS3Path} />
-                  </div>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-        </div>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <div className='flex align-center justify-center'>
+                        <PdfViewer pdfUrl={"https://" + data.chS3Path} />
+                      </div>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+            </div>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mt: 6,
+                color: 'gray',
+                height:'50%',
+                width:'100%'
+              }}
+            >
+
+              <Typography variant='h5' sx={{ fontWeight: 'bold' }}>
+                No Chunk Created Yet
+              </Typography>
+              <Typography variant='body2' sx={{ mt: 1 }}>
+                You can start by uploading a new chapter or section.
+              </Typography>
+            </Box>
+          )
+        }
+
       </div>
     )
 
