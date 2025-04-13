@@ -1,5 +1,7 @@
 package com.enum3rat3.customebooks.Controller;
 
+import com.enum3rat3.customebooks.DTO.BookByIdResponse;
+import com.enum3rat3.customebooks.DTO.BookResponse;
 import com.enum3rat3.customebooks.Service.ConsumerService;
 import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
@@ -21,24 +23,18 @@ public class ConsumerController {
 
     @GetMapping("/books")
     public ResponseEntity<?> listAllBooks() {
-        List<Book> listBooks = new ArrayList<>();
-
+        List<BookResponse> listBooks;
         listBooks = consumerService.listAllBooks();
-
         return ResponseEntity.ok(listBooks);
     }
 
     @GetMapping("/book/{bookId}")
-
-    public ResponseEntity<?> listAllChunks(@PathVariable int bookId) {
-        List<Chunk> chunkList = new ArrayList<>();
-        chunkList = consumerService.listAllChunks(bookId);
-
-        return ResponseEntity.ok(chunkList);
+    public ResponseEntity<?> BookById(@PathVariable int bookId) {
+        BookByIdResponse bookByIdResponse = consumerService.BookById(bookId);
+        return ResponseEntity.ok(bookByIdResponse);
     }
 
     @PostMapping("/generate-book")
-
     public ResponseEntity<?> generateBook(@RequestBody NewBookDTO newBookDTO) throws Exception {
         int totalCost = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getAuthorName(), newBookDTO.getChunkIds());
 

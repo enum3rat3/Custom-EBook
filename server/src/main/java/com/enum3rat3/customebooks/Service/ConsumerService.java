@@ -1,9 +1,13 @@
 package com.enum3rat3.customebooks.Service;
 
+import com.enum3rat3.customebooks.DTO.BookByIdResponse;
+import com.enum3rat3.customebooks.DTO.BookResponse;
 import com.enum3rat3.customebooks.Repo.BookRepo;
 import com.enum3rat3.customebooks.Repo.ChunkRepo;
+import com.enum3rat3.customebooks.Repo.PublisherRepo;
 import com.enum3rat3.customebooks.model.Book;
 import com.enum3rat3.customebooks.model.Chunk;
+import com.enum3rat3.customebooks.model.Publisher;
 import com.enum3rat3.customebooks.model.XMLGenerator;
 import org.apache.fop.apps.*;
 
@@ -30,10 +34,30 @@ public class ConsumerService {
 
     @Autowired
     private BookRepo bookRepo;
+    @Autowired
+    private PublisherRepo publisherRepo;
 
-    public List<Book> listAllBooks() {
+    public List<BookResponse> listAllBooks() {
         List<Book> books = bookRepo.findAll();
-        return books;
+        List<BookResponse> bookResponses = new ArrayList<>();
+
+        for(Book book : books) {
+            int pubid = book.getPubId();
+            Publisher pub = publisherRepo.findById(pubid).orElse(null);
+            BookResponse br = new BookResponse();
+            br.setBid(book.getBid());
+            br.setBkName(book.getBkName());
+            br.setBkDesc(book.getBkDesc());
+            br.setBookPrice(book.getBookPrice());
+            br.setBkLocalPath(book.getBkLocalPath());
+            br.setBkS3CoverImagePath(book.getBkS3CoverImagePath());
+            br.setBkS3Path(book.getBkS3Path());
+            br.setPublisher(pub.getFirstName());
+
+            bookResponses.add(br);
+        }
+
+        return bookResponses;
     }
 
     public List<Chunk> listAllChunks(int bookId) {
@@ -142,5 +166,24 @@ public class ConsumerService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public BookByIdResponse BookById(int bookId) {
+        List<Chunk>chunkList=listAllChunks(bookId);
+        Book book = bookRepo.findByBid(bookId);
+        Publisher pub=publisherRepo.findById(book.getPubId()).orElse(null);
+        BookByIdResponse br = new BookByIdResponse();
+        br.setBid(book.getBid());
+        br.setBkName(book.getBkName());
+        br.setBkDesc(book.getBkDesc());
+        br.setBookPrice(book.getBookPrice());
+        br.setBkLocalPath(book.getBkLocalPath());
+        br.setBkS3CoverImagePath(book.getBkS3CoverImagePath());
+        br.setBkS3Path(book.getBkS3Path());
+        br.setPublisher(pub.getFirstName());
+        br.setChunks(chunkList);
+
+        return br;
+
     }
 }

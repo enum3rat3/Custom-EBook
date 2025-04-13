@@ -1,33 +1,34 @@
 import { useEffect, useState } from 'react'
-import Footer from './components/Footer/Footer'
-import Navbar from './components/Navbar/Navbar'
 import { useKeycloak } from '@react-keycloak/web'
-import BookList from './components/BookList/BookList'
+import Navbar from './Components/Navbar/Navbar'
+import Footer from './Components/Footer/Footer'
+import Home from './Components/Home/Home'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+
+import Login from './Components/Login/Login'
+import ProtectedRoute from './Utils/ProtectedRoute'
+import Order from './Components/Order/Order'
+import BookList from './Components/BookList/BookList'
+import ChunkList from './Components/ChunkList/ChunkList'
 
 function App () {
-  const { keycloak } = useKeycloak()
+ 
+  return (
+    <>
+      <BrowserRouter>
+        <Navbar />
 
-  if (keycloak.authenticated) {
-    const roles = keycloak.tokenParsed?.realm_access?.roles || []
-    console.log(roles)
-    console.log(keycloak.token);
-    if (roles.includes('consumer')) {
-      return (
-        <>
-            <Navbar/>
-           <BookList/>
-            <Footer/>
-        </>
-      )
-    } else {
-      keycloak.logout()
-      return <h1>Access Denied</h1>
-    }
-  }
-
-  return <button onClick={() => keycloak.login()}>Login</button>
+        <Routes>
+          <Route exact path='/' element={<Home />} />
+          <Route exact path='/books' element={<BookList/>}/>
+          <Route exact path='/book/:id' element={<ChunkList/>}/>
+          <Route exact path='/login' element={<Login />} />
+          <Route exact path='/orders' element={<ProtectedRoute element={<Order/>}/>} />
+        </Routes>
+        <Footer />
+      </BrowserRouter>
+    </>
+  )
 }
 
 export default App
-
-

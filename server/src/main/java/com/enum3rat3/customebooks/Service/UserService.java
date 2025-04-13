@@ -26,11 +26,11 @@ public class UserService {
     @Transactional
     public void syncUserFromJwt(Jwt jwt, List<String> roles) {
 
-        String firstName = jwt.getClaimAsString("preferred_username");
-        String lastName= jwt.getClaimAsString("family_name");
+        String firstName = jwt.getClaimAsString("name").split(" ")[0];
+        String lastName= jwt.getClaimAsString("name").split(" ")[1];
         String email = jwt.getClaimAsString("email");
 
-        if (roles.contains("publisher") && publisherRepository.findByEmail(email)==null) {
+        if (roles.contains("publisher") && publisherRepository.findByEmail(email) == null) {
             Publisher publisher = new Publisher();
 
             publisher.setFirstName(firstName);

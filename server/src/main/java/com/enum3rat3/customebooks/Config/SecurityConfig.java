@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .and()
                 .securityMatcher("/api/consumer/**")
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/consumer/books","/api/consumer/book/**").permitAll() // 👈 public access
                         .anyRequest().hasRole("consumer")
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
