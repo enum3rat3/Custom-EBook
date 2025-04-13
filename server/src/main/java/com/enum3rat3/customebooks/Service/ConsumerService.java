@@ -2,13 +2,8 @@ package com.enum3rat3.customebooks.Service;
 
 import com.enum3rat3.customebooks.DTO.BookByIdResponse;
 import com.enum3rat3.customebooks.DTO.BookResponse;
-import com.enum3rat3.customebooks.Repo.BookRepo;
-import com.enum3rat3.customebooks.Repo.ChunkRepo;
-import com.enum3rat3.customebooks.Repo.PublisherRepo;
-import com.enum3rat3.customebooks.model.Book;
-import com.enum3rat3.customebooks.model.Chunk;
-import com.enum3rat3.customebooks.model.Publisher;
-import com.enum3rat3.customebooks.model.XMLGenerator;
+import com.enum3rat3.customebooks.Repo.*;
+import com.enum3rat3.customebooks.model.*;
 import org.apache.fop.apps.*;
 
 import javax.xml.transform.*;
@@ -31,11 +26,18 @@ import java.util.*;
 public class ConsumerService {
     @Autowired
     private ChunkRepo chunkRepo;
-
     @Autowired
     private BookRepo bookRepo;
     @Autowired
     private PublisherRepo publisherRepo;
+    @Autowired
+    private ConsumerRepo consumerRepo;
+    @Autowired
+    private CartRepo cartRepo;
+    @Autowired
+    private OrderRepo orderRepo;
+    @Autowired
+    private AmazonS3Service amazonS3Service;
 
     public List<BookResponse> listAllBooks() {
         List<Book> books = bookRepo.findAll();
@@ -66,7 +68,7 @@ public class ConsumerService {
     }
 
 
-    public int generateBook(String newTitle, String authorName, List<Integer> chunkIds) throws Exception {
+    public Order generateBook(String newTitle, int consumerId, List<Integer> chunkIds) throws Exception {
         int totalCost = 0;
         List<String> headings = new ArrayList<>();
         List<String> chunkPath = new ArrayList<>();
@@ -80,9 +82,25 @@ public class ConsumerService {
             }
         }
 
+        Consumer consumer = consumerRepo.findById(consumerId).orElse(null);
+        String authorName = consumer.getFirstName() + " " + consumer.getLastName();
         String indexFile = createPDF(newTitle, authorName, headings);
-        mergePDF(chunkPath, headings, newTitle, indexFile);
-        return totalCost;
+        String bookLocalPath  = mergePDF(chunkPath, headings, newTitle, indexFile);
+
+        amazonS3Service.uploadChunk(new File(bookLocalPath), newTitle.replace(" ", "_") + ".pdf");
+        String bookS3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + newTitle.replace(" ", "_") + ".pdf";
+
+        Order order = new Order();
+        order.setBookName(newTitle);
+        order.setConsumerId(consumerId);
+        order.setBookS3Path(bookS3Path);
+        order.setBookLocalPath(bookLocalPath);
+        order.setBookPrice(totalCost);
+        orderRepo.save(order);
+
+        cartRepo.deleteAllByConsumerId(consumer.getId());
+
+        return order;
     }
 
     public String createPDF(String title, String authorName, List<String> headings) throws Exception {
@@ -92,7 +110,6 @@ public class ConsumerService {
 
         XMLGenerator xmlGenerator = new XMLGenerator(xmlFile);
         xmlGenerator.createXML(title, authorName, headings);
-
 
         FopFactory fopFactory = FopFactory.newInstance(new File(".").toURI());
         FOUserAgent foUserAgent = fopFactory.newFOUserAgent();
@@ -114,7 +131,7 @@ public class ConsumerService {
         }
     }
 
-    public static void mergePDF(List<String> chunkPaths, List<String> headings, String title, String indexFile)
+    public String mergePDF(List<String> chunkPaths, List<String> headings, String title, String indexFile)
     {
         try {
             String tempPdf = "src/main/resources/merged-pdf/temp.pdf";
@@ -163,9 +180,11 @@ public class ConsumerService {
             mergerUtility1.addSource(tempPdf);
             mergerUtility1.mergeDocuments(null);
 
+            return "src/main/resources/merged-pdf/" + title + ".pdf";
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return "";
     }
 
     public BookByIdResponse BookById(int bookId) {
@@ -184,6 +203,40 @@ public class ConsumerService {
         br.setChunks(chunkList);
 
         return br;
+    }
 
+    public Chunk addToCart(int chunkId, String email) {
+        Consumer consumer = consumerRepo.findByEmail(email);
+        Cart cart = new Cart();
+        cart.setChunkId(chunkId);
+        cart.setConsumerId(consumer.getId());
+        cartRepo.save(cart);
+
+        Chunk chunk = chunkRepo.findById(chunkId).orElse(null);
+        return chunk;
+    }
+
+    public List<Chunk> viewCart(String email) {
+        Consumer consumer = consumerRepo.findByEmail(email);
+        List<Chunk> chunkList = new ArrayList<>();
+        List<Cart> cartList = cartRepo.findAllByConsumerId(consumer.getId());
+
+        for (Cart cart : cartList) {
+            Chunk chunk = chunkRepo.findById(cart.getChunkId()).orElse(null);
+            chunkList.add(chunk);
+        }
+
+        return chunkList;
+    }
+
+    public int removeFromCart(int chunkId, String email) {
+        Consumer consumer = consumerRepo.findByEmail(email);
+        cartRepo.deleteByChunkId(chunkId);
+        return cartRepo.findAllByConsumerId(consumer.getId()).size();
+    }
+
+    public List<Order> myOrder(String email) {
+        Consumer consumer = consumerRepo.findByEmail(email);
+        return orderRepo.findAllByConsumerId(consumer.getId());
     }
 }

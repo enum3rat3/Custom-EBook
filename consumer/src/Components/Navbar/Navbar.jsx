@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -17,7 +18,9 @@ import { toast } from "react-toastify";
 import CustomLoadingPage from "../../Utils/CustomLoadingPage";
 import { useNavigate } from "react-router";
 import LocalMallIcon from "@mui/icons-material/LocalMall";
-import Badge from '@mui/material/Badge';
+import Badge from "@mui/material/Badge";
+import { useDispatch, useSelector } from "react-redux";
+import { viewCart } from "../../Store/consumerReducer";
 
 const pages = ["Explore Books", "My Orders"];
 const settings = ["Logout"];
@@ -25,6 +28,8 @@ const settings = ["Logout"];
 const Navbar = () => {
   const { keycloak, initialized } = useKeycloak();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const consumer = useSelector((state) => state.consumer);
 
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
@@ -60,6 +65,19 @@ const Navbar = () => {
 
     setAnchorElUser(null);
   };
+
+  const handleCartClick = () => {
+    navigate("/cart");
+  };
+
+  useEffect(() => {}, [consumer.cartItems]);
+  useEffect(() => {
+    if (keycloak?.authenticated) {
+      dispatch(
+        viewCart({ jwt: keycloak.token, email: keycloak?.tokenParsed.email })
+      );
+    }
+  }, [keycloak?.authenticated]);
 
   if (!initialized) {
     return <CustomLoadingPage />;
@@ -178,9 +196,18 @@ const Navbar = () => {
             {keycloak?.authenticated ? (
               <>
                 <Tooltip title="Cart">
-                  <Badge badgeContent={3} color="primary" >
-                    <LocalMallIcon  sx={{ fontSize: 38 }} />
-                  </Badge>
+                  <button onClick={handleCartClick}>
+                    <Badge
+                      badgeContent={
+                        consumer.cartItems.length > 0
+                          ? `${consumer.cartItems.length}`
+                          : "0"
+                      }
+                      color="primary"
+                    >
+                      <LocalMallIcon sx={{ fontSize: 38 }} />
+                    </Badge>
+                  </button>
                 </Tooltip>
                 <Tooltip title="Open Menu">
                   <IconButton

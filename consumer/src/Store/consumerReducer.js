@@ -54,6 +54,43 @@ export const getBooks = createAsyncThunk("getBooks", async () => {
   }
 });
 
+export const addToCart = createAsyncThunk(
+  "addToCart",
+  async ({ jwt, email ,chunkId}) => {
+    setAuthHeader(jwt, api);
+    try {
+      const response = await api.post(
+        `${BASE_URL}/api/consumer/add-to-cart`, {},{
+          params: {
+            chunkId: chunkId,
+            email: email
+          }
+        });
+      return response.data;
+    } catch (error) {
+      throw Error(error.response.data.error);
+    }
+  }
+);
+
+export const viewCart=createAsyncThunk(
+  "viewCart",
+  async({jwt,email})=>{
+    setAuthHeader(jwt,api);
+    try {
+      const response = await api.get(
+        `${BASE_URL}/api/consumer/view-cart`,{
+          params: {
+            email: email
+          }
+        });
+      return response.data;
+    } catch (error) {
+      throw Error(error.response.data.error);
+    }
+  }
+)
+
 const consumerSlice = createSlice({
   name: "consumer",
   initialState: {
@@ -61,6 +98,7 @@ const consumerSlice = createSlice({
     ChunksOfBook: [],
     BookById: [],
     Books: [],
+    cartItems:[] ,
     loading: false,
     error: null,
   },
@@ -118,7 +156,34 @@ const consumerSlice = createSlice({
       .addCase(getBooks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error;
-      });
+      })
+      .addCase(addToCart.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addToCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.cartItems = [...state.cartItems,action.payload];
+        state.error = null;
+      })
+      .addCase(addToCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error;
+      })
+      .addCase(viewCart.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(viewCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.cartItems = action.payload;
+        state.error = null;
+      })
+      .addCase(viewCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error;
+      })
+      
   },
 });
 

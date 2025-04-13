@@ -11,6 +11,6 @@ import java.util.List;
 @Setter
 public class NewBookDTO {
     private String newTitle;
-    private String authorName;
+    private int consumerId;
     private List<Integer> chunkIds;
 }

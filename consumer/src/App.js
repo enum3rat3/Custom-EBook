@@ -10,6 +10,7 @@ import ProtectedRoute from './Utils/ProtectedRoute'
 import Order from './Components/Order/Order'
 import BookList from './Components/BookList/BookList'
 import ChunkList from './Components/ChunkList/ChunkList'
+import Cart from './Components/Cart/Cart'
 
 function App () {
  
@@ -23,6 +24,7 @@ function App () {
           <Route exact path='/books' element={<BookList/>}/>
           <Route exact path='/book/:id' element={<ChunkList/>}/>
           <Route exact path='/login' element={<Login />} />
+          <Route exact path='/cart' element={<ProtectedRoute element={<Cart/>}/>} />
           <Route exact path='/orders' element={<ProtectedRoute element={<Order/>}/>} />
         </Routes>
         <Footer />
