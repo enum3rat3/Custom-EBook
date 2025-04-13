@@ -22,14 +22,16 @@ export const uploadBook = createAsyncThunk(
 
 export const publishBook = createAsyncThunk(
   'publishBook',
-  async ({ jwt, bookName, localPath, s3path, bookPrice, pubId }) => {
+  async ({ jwt, bookName,description, localPath, s3path,s3CoverImagePath, bookPrice, pubId }) => {
     setAuthHeader(jwt, api)
     try {
       const response = await api.post(`${BASE_URL}/api/publisher/publish`, {},{
         params: {
           bookName: bookName,
+          description:description,
           localPath: localPath,
           s3path: s3path,
+          s3CoverImagePath:s3CoverImagePath,
           bookPrice: bookPrice,
           pubId: pubId
         }

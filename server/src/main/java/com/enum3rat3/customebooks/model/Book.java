@@ -17,11 +17,17 @@ public class Book {
     @Column(name = "bkname")
     private String bkName;
 
+    @Column(name="bkdesc")
+    private String bkDesc;
+
     @Column(name = "bklocalpath")
     private String bkLocalPath;
 
     @Column(name = "bks3path")
     private String bkS3Path;
+
+    @Column(name="bks3coverimagepath")
+    private String bkS3CoverImagePath;
 
     @Column(name = "bkprice")
     private int bookPrice;
@@ -29,11 +35,13 @@ public class Book {
     @Column(name = "pubid")
     private int pubId;
 
-    public Book(String bkName, String bkLocalPath, String bkS3Path, int bookPrice, int pubId) {
+    public Book(String bkName, String bkDesc, String bkLocalPath, String bkS3Path, String bkS3CoverImagePath, int bookPrice, int pubId) {
         this.bkName = bkName;
         this.bkLocalPath = bkLocalPath;
         this.bkS3Path = bkS3Path;
         this.bookPrice = bookPrice;
         this.pubId = pubId;
+        this.bkDesc = bkDesc;
+        this.bkS3CoverImagePath = bkS3CoverImagePath;
     }
 }

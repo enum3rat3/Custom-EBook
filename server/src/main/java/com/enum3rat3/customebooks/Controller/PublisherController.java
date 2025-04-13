@@ -20,11 +20,11 @@ public class PublisherController {
     private PublisherService publisherService;
 
     @PostMapping("/publish")
-    public ResponseEntity<?> createBook(@RequestParam String bookName, @RequestParam String localPath, @RequestParam String s3path,@RequestParam int bookPrice,@RequestParam String pubId)
+    public ResponseEntity<?> createBook(@RequestParam String bookName,@RequestParam String description, @RequestParam String localPath, @RequestParam String s3path,@RequestParam String s3CoverImagePath,@RequestParam int bookPrice,@RequestParam String pubId)
     {
 
         try {
-           publisherService.createBook(bookName, localPath, s3path,bookPrice,pubId);
+           publisherService.createBook(bookName, description,localPath, s3path,s3CoverImagePath,bookPrice,pubId);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -33,11 +33,11 @@ public class PublisherController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadBook(@RequestParam String bookName, @RequestParam MultipartFile book)
+    public ResponseEntity<?> uploadBook(@RequestParam String bookName, @RequestParam MultipartFile image,@RequestParam MultipartFile book)
     {
         LocalS3DTO localS3DTO;
         try {
-            localS3DTO = publisherService.uploadBook(book,bookName);
+            localS3DTO = publisherService.uploadBook(book,image,bookName);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

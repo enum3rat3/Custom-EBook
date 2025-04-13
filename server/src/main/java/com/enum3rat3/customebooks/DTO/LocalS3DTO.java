@@ -12,5 +12,6 @@ public class LocalS3DTO {
 
     private String localPath;
     private String s3Path;
+    private String s3CoverImagePath;
 
 }

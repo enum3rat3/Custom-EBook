@@ -33,7 +33,7 @@ public class PublisherService {
     }
 
     // ======================== Upload PDF =====================
-    public void createBook(String bookName,String localPath, String s3Path, int bookPrice,String email) throws IOException {
+    public void createBook(String bookName,String description,String localPath,  String s3Path,String s3CoverImagePath, int bookPrice,String email) throws IOException {
 
         // Upload Book in Cloud
 //        amazonS3Service.uploadBook(book, bookName.replace(" ", "_"));
@@ -49,15 +49,13 @@ public class PublisherService {
 
         Publisher publisher=publisherRepo.findByEmail(email);
 
-        Book book1 = new Book(bookName, localPath, s3Path, bookPrice, publisher.getId());
+        Book book1 = new Book(bookName, description, localPath, s3Path, s3CoverImagePath, bookPrice, publisher.getId());
         book1 = bookRepo.save(book1);
         System.out.println(book1.toString());
-
-
     }
 
-    public LocalS3DTO uploadBook(MultipartFile book,String bookName) throws IOException {
-        amazonS3Service.uploadBook(book, bookName.replace(" ", "_"));
+    public LocalS3DTO uploadBook(MultipartFile book,MultipartFile image,String bookName) throws IOException {
+        String s3CoverImagePath=amazonS3Service.uploadBook(book, image,bookName.replace(" ", "_"));
         String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";
 
 
@@ -75,7 +73,7 @@ public class PublisherService {
             os.write(book.getBytes());
         }
 
-        return new LocalS3DTO(localPath, s3Path);
+        return new LocalS3DTO(localPath, s3Path,s3CoverImagePath);
     }
 
     // ======================== Chunk PDF =====================
