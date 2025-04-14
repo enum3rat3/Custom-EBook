@@ -3,13 +3,12 @@ import { BASE_URL, api, setAuthHeader } from "../Api/api";
 
 export const getBookById = createAsyncThunk(
   "getBookById",
-  async ({  bookId }) => {
-    
+  async ({ bookId }) => {
     try {
       const response = await api.get(`${BASE_URL}/api/consumer/book/${bookId}`);
       return response.data;
     } catch (error) {
-      throw Error(error.response.data.error);
+      throw Error(error);
     }
   }
 );
@@ -24,7 +23,7 @@ export const getBookChunks = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      throw Error(error.response.data.error);
+      throw Error(error);
     }
   }
 );
@@ -39,7 +38,7 @@ export const getMyBooks = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      throw Error(error.response.data.error);
+      throw Error(error);
     }
   }
 );
@@ -56,40 +55,93 @@ export const getBooks = createAsyncThunk("getBooks", async () => {
 
 export const addToCart = createAsyncThunk(
   "addToCart",
-  async ({ jwt, email ,chunkId}) => {
+  async ({ jwt, email, chunkId }) => {
     setAuthHeader(jwt, api);
     try {
       const response = await api.post(
-        `${BASE_URL}/api/consumer/add-to-cart`, {},{
+        `${BASE_URL}/api/consumer/add-to-cart`,
+        {},
+        {
           params: {
             chunkId: chunkId,
-            email: email
-          }
-        });
+            email: email,
+          },
+        }
+      );
       return response.data;
     } catch (error) {
-      throw Error(error.response.data.error);
+      throw Error(error);
     }
   }
 );
 
-export const viewCart=createAsyncThunk(
-  "viewCart",
-  async({jwt,email})=>{
-    setAuthHeader(jwt,api);
+export const viewCart = createAsyncThunk("viewCart", async ({ jwt, email }) => {
+  setAuthHeader(jwt, api);
+  try {
+    const response = await api.get(`${BASE_URL}/api/consumer/view-cart`, {
+      params: {
+        email: email,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw Error(error.response.data.error);
+  }
+});
+
+export const deleteFromCart = createAsyncThunk(
+  "deletefromcart",
+  async ({ jwt, email, chunkId }) => {
+    setAuthHeader(jwt, api);
     try {
-      const response = await api.get(
-        `${BASE_URL}/api/consumer/view-cart`,{
+      const response = await api.delete(
+        `${BASE_URL}/api/consumer/remove-from-cart`,
+        {
           params: {
-            email: email
-          }
-        });
+            chunkId: chunkId,
+            email: email,
+          },
+        }
+      );
       return response.data;
     } catch (error) {
-      throw Error(error.response.data.error);
+      throw Error(error);
     }
   }
-)
+);
+
+export const generateBook = createAsyncThunk(
+  "generateBook",
+  async ({ jwt, newBookDTO }) => {
+    setAuthHeader(jwt, api);
+    try {
+      const response = await api.post(
+        `${BASE_URL}/api/consumer/generate-book`,
+        newBookDTO
+      );
+      return response.data;
+    } catch (error) {
+      throw Error(error);
+    }
+  }
+);
+
+export const viewOrders = createAsyncThunk(
+  "viewOrders",
+  async ({ jwt, email }) => {
+    setAuthHeader(jwt, api);
+    try {
+      const response = await api.get(`${BASE_URL}/api/consumer/orders`, {
+        params: {
+          email: email,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw Error(error);
+    }
+  }
+);
 
 const consumerSlice = createSlice({
   name: "consumer",
@@ -98,7 +150,7 @@ const consumerSlice = createSlice({
     ChunksOfBook: [],
     BookById: [],
     Books: [],
-    cartItems:[] ,
+    cartItems: [],
     loading: false,
     error: null,
   },
@@ -163,7 +215,7 @@ const consumerSlice = createSlice({
       })
       .addCase(addToCart.fulfilled, (state, action) => {
         state.loading = false;
-        state.cartItems = [...state.cartItems,action.payload];
+        state.cartItems = [...state.cartItems, action.payload];
         state.error = null;
       })
       .addCase(addToCart.rejected, (state, action) => {
@@ -183,7 +235,49 @@ const consumerSlice = createSlice({
         state.loading = false;
         state.error = action.error;
       })
-      
+      .addCase(deleteFromCart.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteFromCart.fulfilled, (state, action) => {
+        const deletedChunkId = action.meta.arg.chunkId;
+        state.loading = false;
+        state.cartItems = state.cartItems.filter(
+          (chunk) => chunk.chId !== deletedChunkId
+        );
+        state.error = null;
+      })
+      .addCase(deleteFromCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error;
+      })
+      .addCase(generateBook.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(generateBook.fulfilled, (state, action) => {
+        state.loading = false;
+        state.MyBooks=[...state.MyBooks,action.payload]
+        state.cartItems = [];
+        state.error = null;
+      })
+      .addCase(generateBook.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error;
+      })
+      .addCase(viewOrders.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(viewOrders.fulfilled, (state, action) => {
+        state.loading = false;
+        state.MyBooks = action.payload;
+        state.error = null;
+      })
+      .addCase(viewOrders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error;
+      });
   },
 });
 

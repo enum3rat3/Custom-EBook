@@ -42,7 +42,7 @@ public class ConsumerController {
         return ResponseEntity.ok(chunk);
     }
 
-    @PostMapping("/remove-from-cart")
+    @DeleteMapping("/remove-from-cart")
     public ResponseEntity<?> removeFromCart(@RequestParam int chunkId, @RequestParam String email) {
         int cartSize = consumerService.removeFromCart(chunkId, email);
         return ResponseEntity.ok(cartSize);
@@ -62,7 +62,7 @@ public class ConsumerController {
 
     @PostMapping("/generate-book")
     public ResponseEntity<?> generateBook(@RequestBody NewBookDTO newBookDTO) throws Exception {
-        Order order = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getConsumerId(), newBookDTO.getChunkIds());
+        Order order = consumerService.generateBook(newBookDTO.getNewTitle(), newBookDTO.getEmail(), newBookDTO.getChunkIds());
         return ResponseEntity.ok(order);
     }
 }

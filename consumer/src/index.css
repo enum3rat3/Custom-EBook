@@ -9,6 +9,10 @@ body {
   overflow-x: hidden;
   overflow-y: scroll;
 
+  background: linear-gradient(to bottom right, #ffffff, #dcd9d9);
+  min-height: 100vh;
+  font-family: sans-serif;
+
 }
 
 code {

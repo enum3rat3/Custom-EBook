@@ -17,6 +17,7 @@ import PdfViewer from "../NewBook/test";
 import Slide from "@mui/material/Slide";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
   CircularProgress,
   Grid,
@@ -70,7 +71,7 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
-const array = [1];
+
 
 const ChunkList = () => {
   const { keycloak, initialized } = useKeycloak();
@@ -79,7 +80,6 @@ const ChunkList = () => {
   const consumer = useSelector((state) => state.consumer);
   const { id } = useParams();
   const [expanded, setExpanded] = useState("panel0");
-  
 
   const handleChange = (panel) => (event, newExpanded) => {
     setExpanded(newExpanded ? panel : false);
@@ -91,14 +91,24 @@ const ChunkList = () => {
     return fileName.replace(".pdf", "");
   };
 
-  const handleAddToCart=(id)=>{
+  const handleAddToCart = (id) => {
     try {
-      dispatch(addToCart({jwt:keycloak.token,email:keycloak.tokenParsed.email,chunkId:id}));
-      toast.success("Chunk Added To Cart Successfully")
+      dispatch(
+        addToCart({
+          jwt: keycloak.token,
+          email: keycloak.tokenParsed.email,
+          chunkId: id,
+        })
+      );
+      toast.success("Chunk Added To Cart Successfully");
     } catch (error) {
-      toast.error("Error While Adding Chunk To Cart")
+      toast.error("Error While Adding Chunk To Cart");
     }
-  }
+  };
+
+  const checkIfPresent = (chId) => {
+    return consumer.cartItems.some((item) => item.chId === chId);
+  };
 
   useEffect(() => {
     try {
@@ -109,9 +119,7 @@ const ChunkList = () => {
     }
   }, []);
 
-  useEffect(()=>{
-    
-  },[consumer.loading])
+  useEffect(() => {}, [consumer.loading]);
 
   if (!initialized) {
     return <CustomLoadingPage />;
@@ -206,21 +214,39 @@ const ChunkList = () => {
                       }}
                     >
                       <Typography component="span">
-                        {"Price: "+data.chPrice + " Rs."}
+                        {"Price: " + data.chPrice + " Rs."}
                       </Typography>
-                      <Button
-                        sx={{
-                          backgroundColor: "#1F2937",
-                          color: "#FFFFFF",
-                          "&:hover": {
+                      {checkIfPresent(data.chId) ? (
+                        <Button
+                          sx={{
                             backgroundColor: "#374151",
-                          },
-                          textTransform: "none", // optional: disables ALL CAPS
-                        }}
-                        onClick={()=>handleAddToCart(data.chId)}
-                      >
-                        <p>Add To Cart</p>
-                      </Button>
+                            color: "white",
+                            "&:hover": {
+                              backgroundColor: "#374151",
+                            },
+                            textTransform: "none",
+                            opacity: 0.7, // slightly dimmed to show it's disabled
+                            cursor: "not-allowed",
+                          }}
+                          disabled
+                        >
+                          <p style={{ color: "white" }}>Added</p>
+                        </Button>
+                      ) : (
+                        <Button
+                          sx={{
+                            backgroundColor: "#1F2937",
+                            color: "#FFFFFF",
+                            "&:hover": {
+                              backgroundColor: "#374151",
+                            },
+                            textTransform: "none",
+                          }}
+                          onClick={() => handleAddToCart(data.chId)}
+                        >
+                          <p style={{ color: "white" }}>Add To Cart</p>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </AccordionSummary>

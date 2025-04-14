@@ -60,7 +60,9 @@ const Navbar = () => {
     const text = event.target.innerText;
     if (text === "Logout") {
       console.log("entered");
-      keycloak.logout();
+      keycloak.logout({
+        redirectUri: 'http://localhost:4000/', // Redirect to home page after logout
+      });
     }
 
     setAnchorElUser(null);

@@ -1,134 +1,307 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import ArrowCircleUpIcon from '@mui/icons-material/ArrowCircleUp';
-import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  Typography,
+  IconButton,
+  styled,
+  FormControl,
+  TextField,
+  Button,
+  CircularProgress,
+} from "@mui/material";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import PdfViewer from "../NewBook/test";
+import { useDispatch, useSelector } from "react-redux";
+import { useKeycloak } from "@react-keycloak/web";
+import CustomLoadingPage from "../../Utils/CustomLoadingPage";
+import { deleteFromCart, generateBook } from "../../Store/consumerReducer";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
+import MuiAccordion from "@mui/material/Accordion";
+import MuiAccordionSummary, {
+  accordionSummaryClasses,
+} from "@mui/material/AccordionSummary";
+import MuiAccordionDetails from "@mui/material/AccordionDetails";
+import Slide from "@mui/material/Slide";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router";
 
-const columns = [
-  { field: 'chId', headerName: 'Chapter ID', width: 120 },
-  { field: 'bkId', headerName: 'Book ID', width: 100 },
-  { field: 'startPage', headerName: 'Start Page', width: 120 },
-  { field: 'endPage', headerName: 'End Page', width: 120 },
-  { field: 'chPrice', headerName: 'Price (₹)', width: 120 },
-  {
-    field: 'chS3Path',
-    headerName: 'S3 Preview',
-    width: 200,
-    renderCell: (params) => (
-      <a
-        href={`https://${params.value}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 underline"
-      >
-        View PDF
-      </a>
-    ),
+const ItemType = "CARD";
+
+const Accordion = styled((props) => (
+  <MuiAccordion disableGutters elevation={0} square {...props} />
+))(({ theme }) => ({
+  border: `1px solid ${theme.palette.divider}`,
+  "&:not(:last-child)": {
+    borderBottom: 0,
   },
-];
+  "&::before": {
+    display: "none",
+  },
+}));
 
-export default function CartGrid({ data }) {
-  const [rows, setRows] = useState(
-    data.map((item, index) => ({ ...item, id: index })) // Add `id` for DataGrid
-  );
+const AccordionSummary = styled((props) => (
+  <MuiAccordionSummary
+    expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: "0.9rem" }} />}
+    {...props}
+  />
+))(({ theme }) => ({
+  backgroundColor: "rgba(0, 0, 0, .03)",
+  flexDirection: "row-reverse",
+  [`& .${accordionSummaryClasses.expandIconWrapper}.${accordionSummaryClasses.expanded}`]:
+    {
+      transform: "rotate(90deg)",
+    },
+  [`& .${accordionSummaryClasses.content}`]: {
+    marginLeft: theme.spacing(1),
+  },
+  ...theme.applyStyles("dark", {
+    backgroundColor: "rgba(255, 255, 255, .05)",
+  }),
+}));
 
-  // Function to move a row up
-  const moveRowUp = (index) => {
-    if (index === 0) return; // No row to move up if it's already the first row
-    const updatedRows = [...rows];
-    const [movedItem] = updatedRows.splice(index, 1);
-    updatedRows.splice(index - 1, 0, movedItem); // Insert before the previous item
-    setRows(updatedRows);
-    applyRowAnimation(index - 1, index); // Apply animation
-  };
+const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderTop: "1px solid rgba(0, 0, 0, .125)",
+}));
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
-  // Function to move a row down
-  const moveRowDown = (index) => {
-    if (index === rows.length - 1) return; // No row to move down if it's already the last row
-    const updatedRows = [...rows];
-    const [movedItem] = updatedRows.splice(index, 1);
-    updatedRows.splice(index + 1, 0, movedItem); // Insert after the next item
-    setRows(updatedRows);
-    applyRowAnimation(index + 1, index); // Apply animation
-  };
+const CardItem = ({
+  data,
+  index,
+  moveCard,
+  onDelete,
+  expandedPanel,
+  handleAccordionChange,
+}) => {
+  const ref = React.useRef(null);
 
-  // Function to trigger row animation
-  const applyRowAnimation = (startIndex, endIndex) => {
-    // Find the rows for animation
-    const startRow = document.getElementById(`row-${startIndex}`);
-    const endRow = document.getElementById(`row-${endIndex}`);
+  const [, drop] = useDrop({
+    accept: ItemType,
+    hover(item) {
+      if (item.index === index) return;
+      moveCard(item.index, index);
+      item.index = index;
+    },
+  });
 
-    if (startRow && endRow) {
-      // Add CSS classes to trigger animation
-      startRow.classList.add('transition-all', 'duration-300', 'transform', 'translate-y-4', 'opacity-0');
-      endRow.classList.add('transition-all', 'duration-300', 'transform', 'translate-y-4', 'opacity-0');
+  const [, drag] = useDrag({
+    type: ItemType,
+    item: { index },
+  });
 
-      // Remove the classes after animation ends
-      setTimeout(() => {
-        startRow.classList.remove('translate-y-4', 'opacity-0');
-        endRow.classList.remove('translate-y-4', 'opacity-0');
-      }, 300); // Duration of the animation (300ms)
-    }
+  drag(drop(ref));
+
+  const getFileNameWithoutExtension = (url) => {
+    const urlParts = url.split("/");
+    const fileName = urlParts[urlParts.length - 1];
+    return fileName.replace(".pdf", "");
   };
 
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      <div className="border rounded-md shadow-lg overflow-hidden">
-        <DataGrid
-          columns={[
-            ...columns,
-            {
-              field: 'move',
-              headerName: 'Move',
-              width: 150,
-              renderCell: (params) => {
-                const rowIndex = rows.findIndex((row) => row.id === params.row.id);
-
-                return (
-                  <div className="flex justify-around items-center space-x-2">
-                    <button
-                      onClick={() => moveRowUp(rowIndex)}
-                      disabled={rowIndex === 0} // Disable the "Up" button if it's already the first row
-                      className="text-blue-600 hover:text-blue-800 disabled:text-gray-400 transition duration-200"
-                    >
-                      <ArrowCircleUpIcon fontSize="small" />
-                    </button>
-                    <button
-                      onClick={() => moveRowDown(rowIndex)}
-                      disabled={rowIndex === rows.length - 1} // Disable the "Down" button if it's already the last row
-                      className="text-blue-600 hover:text-blue-800 disabled:text-gray-400 transition duration-200"
-                    >
-                      <ArrowCircleDownIcon fontSize="small" />
-                    </button>
-                  </div>
-                );
-              },
-            },
-          ]}
-          rows={rows}
-          hideFooter
-          autoHeight
-          disableColumnMenu
-          disableSelectionOnClick
-          sx={{
-            // Custom styling
-            border: '1px solid #ddd',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            '& .MuiDataGrid-cell': {
-              padding: '8px',
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#f4f4f4',
-              color: '#333',
-              fontWeight: '600',
-            },
-            '& .MuiDataGrid-footerContainer': {
-              display: 'none', // Hide the footer for a cleaner look
-            },
-          }}
-          getRowClassName={(params) => `row-${params.row.id}`} // Add unique class to each row for animation
-        />
-      </div>
+    <div ref={ref} className=" cursor-move w-full">
+      <Accordion
+        sx={{ marginTop: 2, borderRadius: 2, boxShadow: 3 }}
+        expanded={expandedPanel === index}
+        onChange={() => handleAccordionChange(index)}
+      >
+        <AccordionSummary>
+          <div className="flex justify-between items-center w-full">
+            <Typography component="span">
+              {getFileNameWithoutExtension(data.chS3Path)}
+            </Typography>
+            <div className="flex items-center gap-2">
+              <Typography component="span">
+                {"Price: " + data.chPrice + " Rs."}
+              </Typography>
+              <IconButton
+                onClick={() => onDelete(index, data.chId)}
+                size="medium"
+              >
+                <DeleteIcon style={{ color: "red" }} />
+              </IconButton>
+              <DragIndicatorIcon style={{ color: "gray" }} />
+            </div>
+          </div>
+        </AccordionSummary>
+        <AccordionDetails>
+          <div className="flex align-center justify-center">
+            <PdfViewer pdfUrl={`https://${data.chS3Path}`} />
+          </div>
+        </AccordionDetails>
+      </Accordion>
     </div>
   );
-}
+};
+
+const CartGrid = () => {
+  const { keycloak, initialized } = useKeycloak();
+  const consumer = useSelector((state) => state.consumer);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const cartItems = useSelector((state) => state.consumer.cartItems);
+  const [cards, setCards] = useState(cartItems || []);
+  const [expandedPanel, setExpandedPanel] = useState(null); // 👈
+  const [bookTitle, setBookTitle] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const moveCard = useCallback((from, to) => {
+    setCards((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(from, 1);
+      updated.splice(to, 0, moved);
+      return updated;
+    });
+  }, []);
+
+  const deleteCard = useCallback(
+    (index, chId) => {
+      try {
+        dispatch(
+          deleteFromCart({
+            jwt: keycloak.token,
+            email: keycloak?.tokenParsed.email,
+            chunkId: chId,
+          })
+        );
+        toast.success("chunk removed from cart");
+      } catch (error) {
+        toast.error("error while removing chunk from cart");
+      }
+      const updated = cards.filter((_, i) => i !== index);
+      setCards(updated);
+    },
+    [cards, dispatch]
+  );
+
+  const handleAccordionChange = (panelIndex) => {
+    setExpandedPanel((prev) => (prev === panelIndex ? null : panelIndex));
+  };
+
+  const sumResult = () => cards.reduce((acc, curr) => acc + curr.chPrice, 0);
+
+  const handleGenerateBook = async () => {
+    if (!bookTitle.length) {
+      toast.info("Enter Book Title");
+      return;
+    }
+  
+    const newChunkIds = cards.map((item) => parseInt(item.chId, 10));
+  
+    const payload = {
+      newTitle: bookTitle,
+      email: keycloak?.tokenParsed.email,
+      chunkIds: newChunkIds,
+    };
+  
+    try {
+      await dispatch(generateBook({ jwt: keycloak.token, newBookDTO: payload }));
+      
+      // Optional: simulate delay
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      toast.success("Book generated Successfully");
+      navigate("/orders");
+    } catch (error) {
+      toast.error("Error while generating book!");
+    } finally {
+    }
+  };
+  
+
+  if (!initialized || consumer.loading) {
+    return <CustomLoadingPage />;
+  }
+
+  return (
+    <div className="flex flex-col w-full">
+      <div className="flex   text-center justify-center"></div>
+      {cards && cards.length > 0 ? (
+        <>
+          <FormControl
+            fullWidth
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 2,
+              justifyContent: "space-between",
+            }}
+          >
+            <TextField
+              required
+              id="outlined-basic"
+              label="Book Title"
+              variant="outlined"
+              placeholder="Enter Book Title Here..."
+              className="w-[400px]"
+              value={bookTitle}
+              onChange={(e) => setBookTitle(e.target.value)}
+            />
+
+            <div className="flex gap-2">
+              <TextField
+                id="outlined-basic"
+                label="Total Price(INR)."
+                variant="filled"
+                placeholder="Total Price(INR)."
+                className="w-[200px]"
+                value={sumResult()}
+                InputProps={{
+                  sx: {
+                    color: "black", // 👈 Works the same way
+                  },
+                }}
+              />
+
+              <Button
+                size="small"
+                sx={{
+                  minWidth: "130px",
+                  minHeight: "40px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: "0.75rem",
+                  backgroundColor: "#1F2937",
+                }}
+                disabled={loading}
+                onClick={handleGenerateBook}
+              >
+                {loading ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
+                ) : (
+                  "Generate Book"
+                )}
+              </Button>
+            </div>
+          </FormControl>
+          <DndProvider backend={HTML5Backend}>
+            <div className="flex flex-col">
+              {cards.map((card, idx) => (
+                <CardItem
+                  key={idx}
+                  data={card}
+                  index={idx}
+                  moveCard={moveCard}
+                  onDelete={deleteCard}
+                  expandedPanel={expandedPanel}
+                  handleAccordionChange={handleAccordionChange}
+                />
+              ))}
+            </div>
+          </DndProvider>
+        </>
+      ) : (
+        <h1>No Data Present</h1>
+      )}
+    </div>
+  );
+};
+
+export default CartGrid;

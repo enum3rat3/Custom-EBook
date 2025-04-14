@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocume
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.util.*;
@@ -68,7 +69,8 @@ public class ConsumerService {
     }
 
 
-    public Order generateBook(String newTitle, int consumerId, List<Integer> chunkIds) throws Exception {
+    @Transactional
+    public Order generateBook(String newTitle, String email, List<Integer> chunkIds) throws Exception {
         int totalCost = 0;
         List<String> headings = new ArrayList<>();
         List<String> chunkPath = new ArrayList<>();
@@ -82,17 +84,17 @@ public class ConsumerService {
             }
         }
 
-        Consumer consumer = consumerRepo.findById(consumerId).orElse(null);
+        Consumer consumer = consumerRepo.findByEmail(email);
         String authorName = consumer.getFirstName() + " " + consumer.getLastName();
         String indexFile = createPDF(newTitle, authorName, headings);
         String bookLocalPath  = mergePDF(chunkPath, headings, newTitle, indexFile);
 
         amazonS3Service.uploadChunk(new File(bookLocalPath), newTitle.replace(" ", "_") + ".pdf");
-        String bookS3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + newTitle.replace(" ", "_") + ".pdf";
+        String bookS3Path = "https://" + amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + newTitle.replace(" ", "_") + ".pdf";
 
         Order order = new Order();
         order.setBookName(newTitle);
-        order.setConsumerId(consumerId);
+        order.setConsumerId(consumer.getId());
         order.setBookS3Path(bookS3Path);
         order.setBookLocalPath(bookLocalPath);
         order.setBookPrice(totalCost);
@@ -229,9 +231,10 @@ public class ConsumerService {
         return chunkList;
     }
 
+    @Transactional
     public int removeFromCart(int chunkId, String email) {
         Consumer consumer = consumerRepo.findByEmail(email);
-        cartRepo.deleteByChunkId(chunkId);
+        cartRepo.deleteAllByChunkId(chunkId);
         return cartRepo.findAllByConsumerId(consumer.getId()).size();
     }
 
