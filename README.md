@@ -33,10 +33,6 @@ This project enables publishers to break their books into reusable components su
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/jainishParmar/Custom-EBook.git
+   git clone https://github.com/enum3rat3/Custom-EBook.git
    cd Custom-EBook
-
-=======
-boom
-new collab
->>>>>>> 2745add7dd83850be32fcf457b96d07b4b7c1001
+    ```
