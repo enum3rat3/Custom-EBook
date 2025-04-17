@@ -56,9 +56,11 @@ const Navbar = () => {
 
   const handleCloseUserMenu = event => {
     const text = event.target.innerText
-    if (text === 'Logout') {
-      console.log('entered')
-      keycloak.logout()
+    if (text === "Logout") {
+      console.log("entered");
+      keycloak.logout({
+        redirectUri: 'http://localhost:3000/', // Redirect to home page after logout
+      });
     }
 
     setAnchorElUser(null)

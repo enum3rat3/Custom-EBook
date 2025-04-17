@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <doc>
-  <title>final-book</title>
-  <author>consumer consumer</author>
+  <title>Custom-EBook 1</title>
+  <author>Jainish Parmar</author>
   <color>#426584</color>
   <content>
-    <heading>book-1_1_5</heading>
+    <heading>Book-1_2_3</heading>
+    <heading>Book-1_1_1</heading>
   </content>
 </doc>
