@@ -74,9 +74,12 @@ public class ConsumerService {
         int totalCost = 0;
         List<String> headings = new ArrayList<>();
         List<String> chunkPath = new ArrayList<>();
+        List<String> coverImagesPath = new ArrayList<>();
         for (Integer chunkId : chunkIds) {
             Chunk chunk = chunkRepo.findById(chunkId).orElse(null);
             if (chunk != null) {
+                String path = bookRepo.findByBid(chunk.getBkId()).getBkName();
+                coverImagesPath.add("src/main/resources/images/" + path.replace(" ", "_") + ".pdf");
                 String heading = chunk.getChS3Path().split("/")[1].split("\\.")[0];
                 headings.add(heading);
                 chunkPath.add(chunk.getChLocalPath());
@@ -87,7 +90,7 @@ public class ConsumerService {
         Consumer consumer = consumerRepo.findByEmail(email);
         String authorName = consumer.getFirstName() + " " + consumer.getLastName();
         String indexFile = createPDF(newTitle, authorName, headings);
-        String bookLocalPath  = mergePDF(chunkPath, headings, newTitle, indexFile);
+        String bookLocalPath  = mergePDF(chunkPath, headings, coverImagesPath, newTitle, indexFile);
 
         amazonS3Service.uploadChunk(new File(bookLocalPath), newTitle.replace(" ", "_") + ".pdf");
         String bookS3Path = "https://" + amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + newTitle.replace(" ", "_") + ".pdf";
@@ -133,7 +136,7 @@ public class ConsumerService {
         }
     }
 
-    public String mergePDF(List<String> chunkPaths, List<String> headings, String title, String indexFile)
+    public String mergePDF(List<String> chunkPaths, List<String> headings, List<String> coverImagesPath, String title, String indexFile)
     {
         try {
             String tempPdf = "src/main/resources/merged-pdf/temp.pdf";
@@ -141,9 +144,10 @@ public class ConsumerService {
             PDFMergerUtility mergerUtility = new PDFMergerUtility();
             mergerUtility.setDestinationFileName(tempPdf);
 
-            for(String chunkPath: chunkPaths)
+            for(int i = 0; i < chunkPaths.size(); i++)
             {
-                mergerUtility.addSource(chunkPath);
+                mergerUtility.addSource(coverImagesPath.get(i));
+                mergerUtility.addSource(chunkPaths.get(i));
             }
             mergerUtility.mergeDocuments(null);
 
@@ -164,7 +168,7 @@ public class ConsumerService {
 
                 documentOutline.addLast(bookmark);
 
-                pageOffset += noOfPages;
+                pageOffset += noOfPages + 1; // adding 1 for cover-image
 
                 inputDocument.close();
             }

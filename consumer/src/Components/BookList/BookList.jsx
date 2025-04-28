@@ -64,7 +64,7 @@ const BookList = () => {
               <Card
                 sx={{
                   width: 300,
-                  height: 320,
+                  height: 400,
                   margin: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -78,7 +78,13 @@ const BookList = () => {
                 key={idx}
               >
                 <CardMedia
-                  sx={{ height: 160 }}
+                  sx={{
+                    height: 250,
+                    width: "100%",
+                    backgroundSize: "contain",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
+                  }}
                   image={data.bkS3CoverImagePath}
                   title={data.bkName + "_cover_image"}
                   onClick={() => handleCardClick(data.bid)}
@@ -90,7 +96,7 @@ const BookList = () => {
                   {/* <Typography gutterBottom variant="h6" component="div">
                     {"published by :: "+data.publisher}
                   </Typography> */}
-                 
+
                   <Typography
                     variant="body2"
                     sx={{
@@ -108,10 +114,10 @@ const BookList = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginLeft:1
+                    marginLeft: 1,
                   }}
                 >
-                   <Typography gutterBottom variant="h8" component="div">
+                  <Typography gutterBottom variant="h8" component="div">
                     {" Price:" + data.bookPrice + " Rs."}
                   </Typography>
                 </CardActions>

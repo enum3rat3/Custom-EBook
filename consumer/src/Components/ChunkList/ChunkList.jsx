@@ -72,7 +72,6 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-
 const ChunkList = () => {
   const { keycloak, initialized } = useKeycloak();
   const dispatch = useDispatch();
@@ -137,7 +136,12 @@ const ChunkList = () => {
         >
           <CardMedia
             component="img"
-            sx={{ width: 300, borderRadius: 2 }}
+            sx={{
+              width: 250,
+              height: "100%", // makes it fill the card's height
+              objectFit: "contain",
+              borderRadius: 2,
+            }}
             image={consumer.BookById.bkS3CoverImagePath}
             alt={consumer.BookById.bkName}
           />

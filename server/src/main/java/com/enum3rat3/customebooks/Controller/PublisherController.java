@@ -37,7 +37,7 @@ public class PublisherController {
     {
         LocalS3DTO localS3DTO;
         try {
-            localS3DTO = publisherService.uploadBook(book,image,bookName);
+            localS3DTO = publisherService.uploadBook(book,image,bookName.replace(" ", "_"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

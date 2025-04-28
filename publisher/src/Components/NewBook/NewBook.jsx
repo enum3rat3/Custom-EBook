@@ -140,7 +140,7 @@ const NewBook = () => {
         formData,
         {
           params: {
-            bookName: fileNameWithoutExtension,
+            bookName: bookTitle,
           },
           headers: {
             Authorization: `Bearer ${keycloak.token}`,
@@ -167,7 +167,7 @@ const NewBook = () => {
     }
   };
 
-  const submitBook = () => {
+  const submitBook = async () => {
 
     if (
       !bookTitle.trim() ||
@@ -181,7 +181,7 @@ const NewBook = () => {
       return;
     }
     try {
-      dispatch(
+       await dispatch(
         publishBook({
           jwt: keycloak.token,
           bookName: bookTitle,

@@ -80,7 +80,7 @@ const BookList = () => {
               <Card
                 sx={{
                   width: 300,
-                  height: 320,
+                  height: 400,
                   margin: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -94,7 +94,13 @@ const BookList = () => {
                 key={idx}
               >
                 <CardMedia
-                  sx={{ height: 160 }}
+                  sx={{     
+                    height: 250,
+                    width: '100%',
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                }}
                   image={data.bkS3CoverImagePath}
                   title={data.bkName + "_cover_image"}
                   onClick={() => handleCardClick(data.bid)}

@@ -29,7 +29,7 @@
                         </fo:block>
                         <!-- Author -->
                         <fo:block font-size="18pt" font-style="italic" color="white">
-                            Written by  <xsl:value-of select="author"/>
+                            Assembled by <xsl:value-of select="author"/>
                         </fo:block>
                     </fo:block>
                 </fo:flow>

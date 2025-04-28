@@ -11,6 +11,10 @@ import com.enum3rat3.customebooks.model.Publisher;
 import jakarta.transaction.Transactional;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -56,8 +60,8 @@ public class PublisherService {
 
     public LocalS3DTO uploadBook(MultipartFile book,MultipartFile image,String bookName) throws IOException {
         String s3CoverImagePath=amazonS3Service.uploadBook(book, image,bookName.replace(" ", "_"));
-        String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";
-
+        String s3Path = amazonS3Service.getBucketName() + ".s3." + amazonS3Service.getEndpointUrl() + "/" + bookName.replace(" ", "_") + ".pdf";;
+        generateCoverImagePDF(bookName, image);
 
         String folderPath = "uploads/";
         String fileName = bookName.replace(" ", "_") + ".pdf";
@@ -74,6 +78,41 @@ public class PublisherService {
         }
 
         return new LocalS3DTO(localPath, s3Path,s3CoverImagePath);
+    }
+
+    public void generateCoverImagePDF(String bookName, MultipartFile image) throws IOException {
+        byte[] imageBytes = image.getBytes();
+        PDDocument document = new PDDocument();
+        PDPage page = new PDPage(PDRectangle.A4);
+        document.addPage(page);
+
+        PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, imageBytes, "uploaded-image");
+        PDRectangle pageSize = page.getMediaBox();
+        float pageWidth = pageSize.getWidth();
+        float pageHeight = pageSize.getHeight();
+
+        float imageWidth = pdImage.getWidth();
+        float imageHeight = pdImage.getHeight();
+
+        // Calculate scale to fit the image completely inside the page
+        float widthScale = pageWidth / imageWidth;
+        float heightScale = pageHeight / imageHeight;
+        float scale = Math.min(widthScale, heightScale); // Fit without cropping
+
+        float scaledWidth = imageWidth * scale;
+        float scaledHeight = imageHeight * scale;
+
+        // Center the image
+        float x = (pageWidth - scaledWidth) / 2;
+        float y = (pageHeight - scaledHeight) / 2;
+
+        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+        contentStream.drawImage(pdImage, x, y, scaledWidth, scaledHeight);
+        contentStream.close();
+        document.save("src/main/resources/images/" + bookName + ".pdf");
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        document.save(outputStream);
     }
 
     // ======================== Chunk PDF =====================

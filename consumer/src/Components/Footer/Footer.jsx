@@ -22,14 +22,14 @@ const Footer = () => {
           </a>
         </div>
 
-        <nav className="mt-4">
+        {/* <nav className="mt-4">
           <ul className="flex justify-center gap-6 text-sm">
             <li><a href="#" className="hover:underline">Home</a></li>
             <li><a href="#" className="hover:underline">About</a></li>
             <li><a href="#" className="hover:underline">Categories</a></li>
             <li><a href="#" className="hover:underline">Contact</a></li>
           </ul>
-        </nav>
+        </nav> */}
 
         <p className="text-xs mt-4">&copy; {new Date().getFullYear()} E-Book. All rights reserved.</p>
       </div>

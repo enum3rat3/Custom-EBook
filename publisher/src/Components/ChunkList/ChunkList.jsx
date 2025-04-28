@@ -230,7 +230,12 @@ const ChunkList = () => {
         >
           <CardMedia
             component="img"
-            sx={{ width: 300, borderRadius: 2 }}
+            sx={{
+              width: 250,
+              height: "100%", // makes it fill the card's height
+              objectFit: "contain",
+              borderRadius: 2,
+            }}
             image={publisher.BookById.bkS3CoverImagePath}
             alt={publisher.BookById.bkName}
           />
