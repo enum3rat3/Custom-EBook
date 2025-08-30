@@ -26,7 +26,7 @@ This project enables publishers to break their books into reusable components su
 - **Database**: MySQL
 - **E-Book Format**: PDF (or other e-book formats supported via conversion tools)
 - **Authentication**: JWT (JSON Web Tokens) or OAuth for user authentication
-- **Cloud Storage**: AWS S3 to store large book files and components.
+- **Cloud Storage**: AWS S3 to store large book files and components. 
 
 
 ### Installation
